@@ -565,11 +565,12 @@ async function sincronizar(manual){
   let mudou = false;
   try {
     // 1) envia fotos pendentes para o Storage
+    // (uma foto com problema não trava o envio do resto)
     for (const f of lista('fotos', f => f._pend)) {
       const b = await IDB.pega('blobs', f.id);
       if (b) {
-        const { error } = await SB.storage.from('fotos').upload(f.caminho, b, { upsert: true, contentType: 'image/jpeg' });
-        if (error && !/exists/i.test(error.message)) throw error;
+        const { error } = await SB.storage.from('fotos').upload(f.caminho, b, { upsert: false, contentType: 'image/jpeg' });
+        if (error && !/exist|duplicate/i.test(error.message)) { SYNC.erro = 'Fotos: ' + error.message; continue; }
       }
       const atual = S.fotos.get(f.id); atual._pend = false; await IDB.poe('fotos', atual);
     }
