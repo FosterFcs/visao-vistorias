@@ -360,7 +360,11 @@ const CONFIG_PADRAO = {
   empresa_nome:MARCA.empresa, empresa_razao:MARCA.contato.razao || '', empresa_cnpj:MARCA.contato.cnpj || '', empresa_fone:MARCA.contato.fone,
   empresa_email:MARCA.contato.email, empresa_site:MARCA.contato.site,
   empresa_endereco:MARCA.contato.endereco, google_review_url:MARCA.contato.google || '',
-  valor_m3:120, valor_km:6, valor_ajudante:180, taxa_embalagem_m3:35, taxa_item_especial:250,
+  // Base da composição de preço (cada mudança tem a sua composição, editável)
+  diaria_ajudante:200, diaria_caminhao:700, diaria_caminhao_terceiro:1100, material_por_m3:25,
+  valor_km:4.5, km_local:60, km_por_dia:600, adicional_andar:60, adicional_icamento:600,
+  adicional_carregamento_longo:150, adicional_desmontagem:150, taxa_item_especial:250,
+  seguro_percentual:1, margem_percentual:20,
   validade_orcamento_dias:15,
   contrato_pagamento_padrao:'50% na assinatura e 50% no dia da mudança, via PIX ou cartão',
   contrato_multa_cancelamento:20,
@@ -752,16 +756,35 @@ function calcOrcamento(m){
     : frota.length && m3 * 1.15 <= soma(frota, c => c.capacidade_m3) ? { nome: `Frota: ${frota.map(c => c.placa).join(' + ')}`, m3: soma(frota, c => c.capacidade_m3) }
     : VEICULOS.find(v => v.m3 >= m3 * 1.15) || { nome: `${Math.ceil(m3*1.15/90)}× Carreta baú`, m3: 90 };
   const ajud = m3 <= 10 ? 2 : m3 <= 25 ? 3 : m3 <= 40 ? 4 : 4 + Math.ceil((m3-40)/15);
-  const km = Number(m.distancia_km || 0);
-  const emb = m._embalagem !== false;
-  const linhas = [
-    ['Volume transportado', `${num(m3,2)} m³ × ${moeda(cfg.valor_m3)}`, m3 * cfg.valor_m3],
-    ['Deslocamento', `${num(km,0)} km × ${moeda(cfg.valor_km)}`, km * cfg.valor_km],
-    ['Equipe', `${ajud} ajudantes × ${moeda(cfg.valor_ajudante)}`, ajud * cfg.valor_ajudante],
-    ['Embalagem e proteção', `${num(m3,2)} m³ × ${moeda(cfg.taxa_embalagem_m3)}`, m3 * cfg.taxa_embalagem_m3],
-    ['Itens especiais', `${especiais} × ${moeda(cfg.taxa_item_especial)}`, especiais * cfg.taxa_item_especial]
-  ];
-  return { itens, m3, especiais, caixas, veic, ajud, linhas, total: soma(linhas, l => l[2]) };
+  const usados = proprio ? [proprio] : frota.length && m3 * 1.15 <= soma(frota, c => c.capacidade_m3) ? frota : [];
+  return { itens, m3, especiais, caixas, veic, ajud, usados, total: totalComposicao(m.composicao) };
+}
+/* ----- composição de preço (o preço não é fixo por m³: depende do serviço, da distância e da dificuldade) ----- */
+function diasServico(m){ const cfg = config(); const km = Number(m.distancia_km || 0); return km > cfg.km_local ? 1 + Math.ceil(km / (cfg.km_por_dia || 600)) : 1; }
+function baseComposicao(c){ return soma((c && c.linhas) || [], l => Number(l.q || 0) * Number(l.u || 0)); }
+function totalComposicao(c){ if (!c || !c.linhas) return 0; return Math.round(baseComposicao(c) * (1 + Number(c.margem || 0) / 100) * 100) / 100; }
+function linhasDificuldade(df){
+  const cfg = config(); const L = [];
+  if (Number(df.andaresOrigem) > 0) L.push({ k:'dif', d:`Escada na origem (${df.andaresOrigem} andar(es) sem elevador)`, q:Number(df.andaresOrigem), u:cfg.adicional_andar });
+  if (Number(df.andaresDestino) > 0) L.push({ k:'dif', d:`Escada no destino (${df.andaresDestino} andar(es) sem elevador)`, q:Number(df.andaresDestino), u:cfg.adicional_andar });
+  if (df.icamento) L.push({ k:'dif', d:'Içamento (corda/guincho pela janela ou sacada)', q:1, u:cfg.adicional_icamento });
+  if (df.carregamentoLongo) L.push({ k:'dif', d:'Carregamento longo (caminhão longe da porta)', q:1, u:cfg.adicional_carregamento_longo });
+  if (df.desmontagem) L.push({ k:'dif', d:'Desmontagem e montagem de móveis', q:1, u:cfg.adicional_desmontagem });
+  return L;
+}
+function sugerirComposicao(m, df){
+  const cfg = config(); const o = calcOrcamento(m); const dias = diasServico(m); const km = Number(m.distancia_km || 0);
+  df = df || (m.composicao && m.composicao.dific) || {};
+  const L = [{ d:`Equipe: ${o.ajud} ajudantes × ${dias} diária(s)`, q:o.ajud * dias, u:cfg.diaria_ajudante }];
+  if (o.usados.length) o.usados.forEach(c => L.push({ d:`Caminhão ${c.modelo || ''} (${c.placa}) × ${dias} diária(s)`.replace('  ',' '), q:dias, u:Number(c.valor_diaria) || cfg.diaria_caminhao }));
+  else if (o.m3) L.push({ d:`Caminhão terceirizado — ${o.veic.nome} × ${dias} diária(s)`, q:dias, u:cfg.diaria_caminhao_terceiro });
+  if (o.m3) L.push({ d:'Materiais de embalagem (estimativa por m³)', q:Math.round(o.m3 * 10) / 10, u:cfg.material_por_m3 });
+  if (km > cfg.km_local) { L.push({ d:'Deslocamento ida e volta (km)', q:km * 2, u:cfg.valor_km }); L.push({ d:'Pedágios', q:1, u:0 }); }
+  if (m.tipo === 'internacional') L.push({ d:'Frete internacional e desembaraço (cotação do parceiro)', q:1, u:0 });
+  if (o.especiais) L.push({ d:'Itens especiais (piano, obra de arte, vidro…)', q:o.especiais, u:cfg.taxa_item_especial });
+  L.push(...linhasDificuldade(df));
+  if (Number(m.seguro_valor_declarado) > 0) L.push({ d:`Seguro (${num(cfg.seguro_percentual,1)}% do valor declarado)`, q:1, u:Math.round(m.seguro_valor_declarado * cfg.seguro_percentual) / 100 });
+  return { linhas: L, dific: df, margem: Number(cfg.margem_percentual) || 0, gerado_em: agora() };
 }
 function resumoVolumes(mid){
   const v = lista('volumes', x => x.mudanca_id === mid);
@@ -1204,11 +1227,11 @@ async function abaOrcamento(el, m){
         <div class="dupla"><span>Itens especiais</span><span>${o.especiais}</span></div>
         <div class="dupla"><span>Caixas previstas</span><span>${o.caixas}</span></div>
         ${resumoComodos.length ? `<table class="tabela" style="margin-top:10px"><thead><tr><th>Ambiente</th><th style="text-align:right">Itens</th><th style="text-align:right">m³</th></tr></thead><tbody>${resumoComodos.map(([c,n,v]) => `<tr data-c="${esc(c)}" style="cursor:pointer"><td>${esc(c)}</td><td class="mono" style="text-align:right">${n}</td><td class="mono" style="text-align:right">${num(v,2)}</td></tr>`).join('')}</tbody></table>` : ''}
-        ${ehGestor() ? `<table class="tabela" style="margin-top:12px"><tbody>${o.linhas.map(l => `<tr><td>${l[0]}<div class="tiny muted">${l[1]}</div></td><td class="mono" style="text-align:right">${moeda(l[2])}</td></tr>`).join('')}
-          <tr><td><b>Total calculado</b></td><td class="mono" style="text-align:right"><b>${moeda(o.total)}</b></td></tr></tbody></table>
-        <form id="ovalor" style="margin-top:10px"><div class="grade g2"><label class="campo" style="margin:0"><span>Valor proposto (R$)</span><input type="number" step="0.01" name="v" value="${esc(m.valor_orcado || Math.round(o.total))}"></label>
-          <label class="campo" style="margin:0"><span>Condições de pagamento</span><input name="cp" value="${esc(m.condicoes_pagamento || config().contrato_pagamento_padrao)}"></label></div><button class="btn" style="margin-top:8px">Salvar valor e condições</button></form>` : ''}
+        <div class="dupla"><span>Duração estimada</span><span>${diasServico(m)} dia(s)</span></div>
       </div>
+      ${ehGestor() ? htmlComposicao(m) : ''}
+      ${ehGestor() ? `<div class="card"><h3>Valor proposto</h3><form id="ovalor"><div class="grade g2"><label class="campo" style="margin:0"><span>Valor proposto (R$)</span><input type="number" step="0.01" name="v" value="${esc(m.valor_orcado ?? (m.composicao ? Math.round(totalComposicao(m.composicao)) : ''))}"></label>
+          <label class="campo" style="margin:0"><span>Condições de pagamento</span><input name="cp" value="${esc(m.condicoes_pagamento || config().contrato_pagamento_padrao)}"></label></div><button class="btn" style="margin-top:8px">Salvar valor e condições</button></form></div>` : ''}
       <div class="card"><h3>Contrato e aprovação</h3>
         ${assOrc ? `<div class="alerta-box verde small">${ic('check','style="width:18px;flex:none"')}<div>Contrato assinado por <b>${esc(assOrc.nome)}</b> em ${fmtDH(assOrc.assinado_em)}</div></div>` : '<p class="small muted" style="margin-top:0">Ao assinar o contrato o cliente aprova o orçamento e a mudança passa para Aprovada.</p>'}
         <div class="acoes"><button class="btn" id="bprop">${ic('impressora')}Proposta</button><button class="btn" id="bcont">${ic('doc')}Contrato</button>
@@ -1230,16 +1253,68 @@ async function abaOrcamento(el, m){
   $('#olivre').onsubmit = async e => { e.preventDefault(); const d = form2obj(e.target);
     const v = numOuNulo(d.m3); await alterar(d.item, v === null ? 0.3 : v, !!d.esp, Math.max(1, Number(d.q)||1)); toast(`${d.item} incluído em ${COMODO_ORC}`, 'ok'); };
   $('#ovalor') && ($('#ovalor').onsubmit = async e => { e.preventDefault(); const d = form2obj(e.target); await salvar('mudancas', { id: m.id, valor_orcado: numOuNulo(d.v), condicoes_pagamento: nulo(d.cp) }); toast('Salvo', 'ok'); render(); });
+  ligarComposicao(el, m);
   $('#bprop').onclick = () => imprimir(docProposta(pega('mudancas', m.id)));
   $('#bcont').onclick = () => imprimir(docContrato(pega('mudancas', m.id)));
   $('#bassorc') && ($('#bassorc').onclick = async () => {
     let mm = pega('mudancas', m.id); const cfg = config();
-    if (!mm.valor_orcado) { const t = Math.round(calcOrcamento(mm).total); if (!t) return toast('Inclua os itens da vistoria antes do contrato', 'erro'); mm = await salvar('mudancas', { id: mm.id, valor_orcado: t }); }
+    if (!mm.valor_orcado) { const t = Math.round(totalComposicao(mm.composicao)); if (!t) return toast('Monte a composição do preço ou informe o valor proposto antes do contrato', 'erro'); mm = await salvar('mudancas', { id: mm.id, valor_orcado: t }); }
     const termo = `Li e aceito o Contrato de Prestação de Serviços de Mudança ${mm.codigo} com ${cfg.empresa_nome}, no valor de ${moeda(mm.valor_orcado)} (${mm.condicoes_pagamento || cfg.contrato_pagamento_padrao}), para ${fmtData(mm.data_prevista)}, incluindo as cláusulas de responsabilidade e o inventário fotográfico.`;
     if (await coletarAssinatura(mm, 'orcamento', 'Assinatura do contrato', termo, () => imprimir(docContrato(pega('mudancas', m.id))))) {
       if (mm.status === 'orcamento') { await salvar('mudancas', { id: mm.id, status: 'aprovada', valor_aprovado: mm.valor_orcado }); await evento(mm.id, 'status', 'Contrato assinado — etapa: Aprovada'); }
       toast('Contrato assinado', 'ok'); render(); }
   });
+}
+
+/* ----- composição de preço (editável) ----- */
+function htmlComposicao(m){
+  const c = m.composicao; const df = (c && c.dific) || {};
+  const linha = (l, i) => `<div class="cl" data-i="${i}" style="border-bottom:1px solid var(--linha-2);padding:8px 0">
+    <input data-f="d" value="${esc(l.d)}" aria-label="Item" style="min-height:38px;padding:6px 9px;font-weight:600">
+    <div style="display:grid;grid-template-columns:70px 1fr 1fr 38px;gap:6px;align-items:center;margin-top:6px">
+      <input data-f="q" type="number" step="any" value="${esc(l.q)}" aria-label="Quantidade" title="Quantidade" style="min-height:36px;padding:6px;text-align:right">
+      <input data-f="u" type="number" step="0.01" value="${esc(l.u)}" aria-label="Valor unitário" title="Valor unitário (R$)" style="min-height:36px;padding:6px;text-align:right">
+      <span class="mono" data-t style="text-align:right;font-weight:700;white-space:nowrap">${moeda(Number(l.q||0)*Number(l.u||0))}</span>
+      <button type="button" class="btn peq perigo" data-del="${i}" aria-label="Remover linha" style="padding:4px;min-height:34px">×</button></div></div>`;
+  return `<div class="card" id="comp"><h3>Composição do preço</h3>
+    <div class="small" style="font-weight:700;margin-bottom:6px">Dificuldades do serviço</div>
+    <div class="grade g2" style="margin-bottom:6px"><label class="campo" style="margin:0"><span>Andares sem elevador — origem</span><input type="number" min="0" data-df="andaresOrigem" value="${esc(df.andaresOrigem||0)}"></label>
+      <label class="campo" style="margin:0"><span>Andares sem elevador — destino</span><input type="number" min="0" data-df="andaresDestino" value="${esc(df.andaresDestino||0)}"></label></div>
+    <div class="chips" style="margin:8px 0 12px">${[['icamento','Içamento'],['carregamentoLongo','Carregamento longo'],['desmontagem','Desmontagem/montagem']].map(([k,n]) => `<span class="chip ${df[k]?'on':''}" data-dfc="${k}">${n}</span>`).join('')}</div>
+    ${c ? `<div style="display:grid;grid-template-columns:70px 1fr 1fr 38px;gap:6px;font-size:11px;color:var(--tinta-3);text-transform:uppercase;letter-spacing:.4px;margin-top:4px"><span style="text-align:right">Qtd</span><span style="text-align:right">Unit. (R$)</span><span style="text-align:right">Total</span><span></span></div>
+      <div id="ctab">${c.linhas.map(linha).join('')}</div>
+      <button type="button" class="btn peq" id="cadd" style="margin-top:8px">${ic('mais2')}Linha</button>
+      <div class="dupla" style="margin-top:10px"><span>Subtotal</span><span class="mono" id="csub">${moeda(baseComposicao(c))}</span></div>
+      <div class="dupla" style="align-items:center"><span>Margem (%)</span><span><input type="number" step="0.5" id="cmarg" value="${esc(c.margem||0)}" style="width:90px;min-height:34px;padding:4px 8px;text-align:right"></span></div>
+      <div class="dupla" style="font-size:16px"><span><b>Total sugerido</b></span><span class="mono"><b id="ctot">${moeda(totalComposicao(c))}</b></span></div>
+      <div class="acoes" style="margin-top:10px"><button type="button" class="btn prim peq" id="cusar">${ic('check')}Usar como valor proposto</button><button type="button" class="btn peq" id="cger">Refazer sugestão</button></div>`
+    : `<p class="small muted">O preço depende do tipo de serviço, da distância e da dificuldade. Gere uma sugestão a partir da vistoria e ajuste cada linha.</p><button type="button" class="btn prim" id="cger">${ic('mais2')}Gerar composição a partir da vistoria</button>`}
+    <p class="tiny muted" style="margin-bottom:0">Valores base em Configurações → Composição de preço. Diária de cada caminhão em Cadastros → Caminhões.</p></div>`;
+}
+function ligarComposicao(el, m){
+  const box = $('#comp', el); if (!box) return;
+  const ler = () => { const mm = pega('mudancas', m.id); const c = JSON.parse(JSON.stringify(mm.composicao || { linhas: [], dific: {}, margem: config().margem_percentual }));
+    $$('#ctab .cl', box).forEach((tr, i) => { if (!c.linhas[i]) c.linhas[i] = {}; ['d','q','u'].forEach(f => { const v = $(`[data-f="${f}"]`, tr).value; c.linhas[i][f] = f === 'd' ? v : (Number(v) || 0); }); });
+    const mg = $('#cmarg', box); if (mg) c.margem = Number(mg.value) || 0; return c; };
+  const atualizar = c => { $$('#ctab .cl', box).forEach((tr, i) => { const l = c.linhas[i]; $('[data-t]', tr).textContent = moeda(Number(l.q||0)*Number(l.u||0)); });
+    $('#csub', box).textContent = moeda(baseComposicao(c)); $('#ctot', box).textContent = moeda(totalComposicao(c)); };
+  const gravar = async (c, rerender) => { await salvar('mudancas', { id: m.id, composicao: c }); if (rerender) { const y = window.scrollY; await render(); window.scrollTo(0, y); } else atualizar(c); };
+  const lerDific = () => { const df = {}; $$('[data-df]', box).forEach(i => df[i.dataset.df] = Number(i.value) || 0); $$('[data-dfc]', box).forEach(ch => df[ch.dataset.dfc] = ch.classList.contains('on')); return df; };
+  const aplicarDific = async () => { const df = lerDific(); const mm = pega('mudancas', m.id);
+    if (!mm.composicao) { await gravar(sugerirComposicao(mm, df), true); return; }
+    const c = ler(); c.dific = df; const resto = c.linhas.filter(l => l.k !== 'dif'); const iSeg = resto.findIndex(l => /^Seguro/.test(l.d));
+    const novas = linhasDificuldade(df); if (iSeg >= 0) resto.splice(iSeg, 0, ...novas); else resto.push(...novas); c.linhas = resto; await gravar(c, true); };
+  $$('[data-df]', box).forEach(i => i.onchange = aplicarDific);
+  $$('[data-dfc]', box).forEach(ch => ch.onclick = () => { ch.classList.toggle('on'); aplicarDific(); });
+  $('#cger', box).onclick = async () => { const mm = pega('mudancas', m.id);
+    if (mm.composicao && !(await confirmar('Refazer a sugestão a partir da vistoria? As linhas editadas à mão serão substituídas.', 'Refazer'))) return;
+    await gravar(sugerirComposicao(mm, lerDific()), true); };
+  if (!$('#ctab', box)) return;
+  box.addEventListener('change', e => { if (e.target.matches('[data-f], #cmarg')) gravar(ler(), false); });
+  box.addEventListener('input', e => { if (e.target.matches('[data-f="q"], [data-f="u"], #cmarg')) atualizar(ler()); });
+  $$('[data-del]', box).forEach(b => b.onclick = async () => { const c = ler(); c.linhas.splice(Number(b.dataset.del), 1); await gravar(c, true); });
+  $('#cadd', box).onclick = async () => { const c = ler(); c.linhas.push({ d: 'Outro serviço', q: 1, u: 0 }); await gravar(c, true); setTimeout(() => { const ins = $$('#ctab [data-f="d"]'); const u = ins[ins.length-1]; if (u) { u.focus(); u.select(); } }, 50); };
+  $('#cusar', box).onclick = async () => { const c = ler(); await salvar('mudancas', { id: m.id, composicao: c, valor_orcado: Math.round(totalComposicao(c)) }); toast('Valor proposto atualizado', 'ok'); const y = window.scrollY; await render(); window.scrollTo(0, y); };
 }
 
 /* =====================================================================
@@ -1849,8 +1924,8 @@ async function vCadastros(c, aba='clientes'){
   if (aba === 'caminhoes') {
     const xs = lista('caminhoes');
     L.innerHTML = xs.map(x => `<div class="item" data-id="${x.id}" style="cursor:pointer">${ic('caminhao','style="width:26px;color:var(--oliva-esc)"')}<div class="cresce"><div class="t">${esc(x.placa)} · ${esc(x.modelo||'')}</div><div class="s">${num(x.capacidade_m3||0,0)} m³</div></div><span class="tag ${x.ativo!==false?'verde':''}">${x.ativo!==false?'ativo':'inativo'}</span></div>`).join('') || '<div class="vazio">Nenhum caminhão.</div>';
-    const f = x => modal(x ? 'Editar caminhão' : 'Novo caminhão', `<form><div class="grade g2"><label class="campo"><span>Placa</span><input name="placa" required value="${esc(x?.placa||'')}"></label><label class="campo"><span>Capacidade (m³)</span><input type="number" step="0.1" name="capacidade_m3" value="${esc(x?.capacidade_m3??'')}"></label></div><label class="campo"><span>Modelo</span><input name="modelo" value="${esc(x?.modelo||'')}"></label><label class="small" style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" name="ativo" ${x?.ativo!==false?'checked':''}> Ativo</label><button class="btn prim bloco">Salvar</button></form>`, (cc, fechar) => {
-      $('form', cc).onsubmit = async e => { e.preventDefault(); const d = form2obj(e.target); await salvar('caminhoes', { id: x?.id, placa: d.placa.toUpperCase(), modelo: nulo(d.modelo), capacidade_m3: numOuNulo(d.capacidade_m3), ativo: !!d.ativo }); fechar(); render(); }; });
+    const f = x => modal(x ? 'Editar caminhão' : 'Novo caminhão', `<form><div class="grade g2"><label class="campo"><span>Placa</span><input name="placa" required value="${esc(x?.placa||'')}"></label><label class="campo"><span>Capacidade (m³)</span><input type="number" step="0.1" name="capacidade_m3" value="${esc(x?.capacidade_m3??'')}"></label></div><label class="campo"><span>Modelo</span><input name="modelo" value="${esc(x?.modelo||'')}"></label><label class="campo"><span>Diária deste caminhão (R$, opcional)</span><input type="number" step="0.01" name="valor_diaria" value="${esc(x?.valor_diaria??'')}"></label><label class="small" style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" name="ativo" ${x?.ativo!==false?'checked':''}> Ativo</label><button class="btn prim bloco">Salvar</button></form>`, (cc, fechar) => {
+      $('form', cc).onsubmit = async e => { e.preventDefault(); const d = form2obj(e.target); await salvar('caminhoes', { id: x?.id, placa: d.placa.toUpperCase(), modelo: nulo(d.modelo), capacidade_m3: numOuNulo(d.capacidade_m3), valor_diaria: numOuNulo(d.valor_diaria), ativo: !!d.ativo }); fechar(); render(); }; });
     $('#bnovo').onclick = () => f(); $$('[data-id]', L).forEach(i => i.onclick = () => f(pega('caminhoes', i.dataset.id)));
   }
   if (aba === 'materiais') {
@@ -1892,7 +1967,13 @@ async function vConfig(c){
   <form id="fcfg">
   <div class="card"><h3>Empresa</h3><div class="grade md-g2">${campo('empresa_nome','Nome fantasia')}${campo('empresa_razao','Razão social')}${campo('empresa_cnpj','CNPJ')}${campo('empresa_fone','Telefone')}${campo('empresa_email','E-mail','email')}${campo('empresa_site','Site')}${campo('empresa_endereco','Endereço')}</div>
     ${campo('google_review_url','Link para avaliação no Google (aparece no portal após a avaliação)','url','placeholder="https://g.page/r/..."')}</div>
-  <div class="card"><h3>Tabela de preços do orçamento</h3><div class="grade g2 g3">${campo('valor_m3','R$ por m³','number','step="0.01"')}${campo('valor_km','R$ por km','number','step="0.01"')}${campo('valor_ajudante','R$ por ajudante','number','step="0.01"')}${campo('taxa_embalagem_m3','Embalagem R$/m³','number','step="0.01"')}${campo('taxa_item_especial','R$ por item especial','number','step="0.01"')}${campo('validade_orcamento_dias','Validade (dias)','number')}</div></div>
+  <div class="card"><h3>Composição de preço — valores base</h3>
+    <p class="small muted" style="margin-top:0">O sistema usa estes valores para sugerir a composição de cada orçamento. Em cada mudança tudo pode ser ajustado.</p>
+    <div class="grade g2 g3">${campo('diaria_ajudante','Diária por ajudante (R$)','number','step="0.01"')}${campo('diaria_caminhao','Diária caminhão próprio (R$)','number','step="0.01"')}${campo('diaria_caminhao_terceiro','Diária caminhão terceirizado (R$)','number','step="0.01"')}
+    ${campo('material_por_m3','Materiais por m³ (R$)','number','step="0.01"')}${campo('valor_km','Valor por km rodado (R$)','number','step="0.01"')}${campo('km_local','Até quantos km é serviço local','number')}
+    ${campo('km_por_dia','Km rodados por dia (viagem)','number')}${campo('adicional_andar','Adicional por andar sem elevador (R$)','number','step="0.01"')}${campo('adicional_icamento','Içamento (R$)','number','step="0.01"')}
+    ${campo('adicional_carregamento_longo','Carregamento longo (R$)','number','step="0.01"')}${campo('adicional_desmontagem','Desmontagem/montagem (R$)','number','step="0.01"')}${campo('taxa_item_especial','Por item especial (R$)','number','step="0.01"')}
+    ${campo('seguro_percentual','Seguro (% do valor declarado)','number','step="0.01"')}${campo('margem_percentual','Margem padrão (%)','number','step="0.5"')}${campo('validade_orcamento_dias','Validade da proposta (dias)','number')}</div></div>
   <div class="card"><h3>Contrato de prestação de serviços</h3>
     <div class="grade md-g2"><label class="campo"><span>Condições de pagamento padrão</span><input name="contrato_pagamento_padrao" value="${esc(cfg.contrato_pagamento_padrao)}"></label>
     <label class="campo"><span>Multa por cancelamento com menos de 48 h (%)</span><input type="number" step="1" name="contrato_multa_cancelamento" value="${esc(cfg.contrato_multa_cancelamento)}"></label></div>
@@ -1909,7 +1990,7 @@ async function vConfig(c){
     <div class="acoes" style="margin-top:12px">${!MODO_DEMO ? `<button class="btn" id="bsync">${ic('nuvem')}Sincronizar agora</button>` : ''}<button class="btn" id="bcon">${ic('link')}Conexão</button><button class="btn" id="bbak">${ic('doc')}Baixar backup (JSON)</button>
     ${MODO_DEMO ? `<button class="btn perigo" id="breset">Apagar dados de demonstração</button>` : ''}</div></div>`;
   $('#fcfg').onsubmit = async e => { e.preventDefault(); const d = form2obj(e.target);
-    ['valor_m3','valor_km','valor_ajudante','taxa_embalagem_m3','taxa_item_especial','validade_orcamento_dias','contrato_multa_cancelamento'].forEach(k => d[k] = numOuNulo(d[k]) ?? 0);
+    ['diaria_ajudante','diaria_caminhao','diaria_caminhao_terceiro','material_por_m3','valor_km','km_local','km_por_dia','adicional_andar','adicional_icamento','adicional_carregamento_longo','adicional_desmontagem','taxa_item_especial','seguro_percentual','margem_percentual','validade_orcamento_dias','contrato_multa_cancelamento'].forEach(k => d[k] = numOuNulo(d[k]) ?? 0);
     await salvarConfig(d); toast('Configurações salvas', 'ok'); };
   $('#brestc').onclick = () => { $('[name=contrato_clausulas]').value = CLAUSULAS_PADRAO; toast('Cláusulas padrão restauradas — salve para aplicar'); };
   $('#bsync') && ($('#bsync').onclick = () => sincronizar(true));

@@ -89,10 +89,13 @@ create table if not exists public.caminhoes (
   placa         text not null,
   modelo        text,
   capacidade_m3 numeric(6,1),
+  valor_diaria  numeric(10,2),
   ativo         boolean not null default true,
   updated_at    timestamptz not null default now(),
   deleted       boolean not null default false
 );
+
+alter table public.caminhoes add column if not exists valor_diaria numeric(10,2);
 
 create table if not exists public.materiais (
   id         uuid primary key default gen_random_uuid(),
@@ -130,6 +133,7 @@ create table if not exists public.mudancas (
   valor_aprovado   numeric(12,2),
   seguro_valor_declarado numeric(12,2),
   condicoes_pagamento text,
+  composicao       jsonb,
   observacoes      text,
   token_portal     uuid not null default gen_random_uuid(),
   avaliacao_nota   int check (avaliacao_nota between 1 and 5),
@@ -140,6 +144,7 @@ create table if not exists public.mudancas (
   deleted          boolean not null default false
 );
 alter table public.mudancas add column if not exists condicoes_pagamento text;
+alter table public.mudancas add column if not exists composicao jsonb;      -- composição do preço (linhas editáveis)
 create index if not exists idx_mudancas_status on public.mudancas(status);
 create index if not exists idx_mudancas_data   on public.mudancas(data_prevista);
 
