@@ -288,8 +288,28 @@ const STATUS_COR = {orcamento:'oliva',aprovada:'azul',embalagem:'amb',carregamen
 const TIPO_NOME = {residencial:'Residencial',comercial:'Comercial',internacional:'Internacional',guarda:'Guarda-móveis'};
 const VOL_TIPO = {caixa:'Caixa',movel:'Móvel',eletro:'Eletro/eletrônico',fragil:'Frágil',especial:'Especial'};
 const VOL_STATUS = {etiquetado:'Etiquetado',carregado:'Carregado',entregue:'Entregue',armazenado:'Armazenado',extraviado:'Extraviado'};
-const AVARIA_TIPOS = ['Risco','Amassado','Lascado','Quebrado','Trincado','Mancha','Rasgado','Descascado','Falta peça','Desgaste'];
-const AVARIA_LOCAIS = ['Frente','Lateral','Tampo','Verso','Pé/base','Porta/gaveta','Quina','Vidro','Tela'];
+// Nomenclatura padrão de inventário de mudança (PT / código / EN)
+const AVARIAS = [['D','Amassado','Dented'],['SC','Arranhado','Scratched'],['W','Bichado','Worm eaten'],['RU','Enferrujado','Rusted'],
+  ['WR','Empenado','Warped'],['CH','Lascado','Chipped'],['SO','Manchado','Soiled'],['MI','Mofado','Mildewed'],['WF','Molhado','Wet'],
+  ['BR','Quebrado','Broken'],['BU','Queimado','Burned'],['C','Rachado','Cracked'],['T','Rasgado','Torn'],['R','Roçado','Rubbed'],['L','Solto','Loose']];
+const LOCAIS_AV = [[1,'No braço','Arm'],[2,'Embaixo','Bottom'],[3,'No canto','Corner'],[4,'Na frente','Front'],[5,'À esquerda','Left'],
+  [6,'Na perna','Leg'],[7,'Atrás','Rear'],[8,'À direita','Right'],[9,'Ao lado','Side'],[10,'Em cima','Top']];
+const AV_LEGADO = { 'Risco':'SC','Desgaste':'R','Trincado':'C','Mancha':'SO','Falta peça':'L','Descascado':'R' };
+const LOC_LEGADO = { 'Frente':4,'Lateral':9,'Tampo':10,'Verso':7,'Pé/base':6,'Quina':3,'Porta/gaveta':4 };
+function avariaInfo(a){
+  const t = AVARIAS.find(x => x[0] === a.cod || x[1].toLowerCase() === String(a.tipo||'').toLowerCase() || x[0] === AV_LEGADO[a.tipo]);
+  const lc = a.locCod ?? LOC_LEGADO[a.local] ?? (LOCAIS_AV.find(x => x[1].toLowerCase() === String(a.local||'').toLowerCase()) || [])[0];
+  const l = LOCAIS_AV.find(x => x[0] === Number(lc));
+  return { cod: t ? t[0] : '', nome: t ? t[1] : (a.tipo || ''), loc: l ? l[0] : null, local: l ? l[1] : (a.local || '') };
+}
+const codAvaria = a => { const i = avariaInfo(a); return i.cod ? i.cod + (i.loc ? '-' + i.loc : '') : i.nome + (i.local ? ' (' + i.local + ')' : ''); };
+const textoAvaria = a => { const i = avariaInfo(a); return `${i.cod ? i.cod + ' ' : ''}${i.nome}${i.local ? ' · ' + i.local : ''}`; };
+// Acondicionamento: Cx/ = vai dentro de caixa · Emb/ = embalado (móvel, cadeira, eletro)
+const acondDe = v => v.acondicionamento || (v.tipo === 'caixa' ? 'cx' : 'emb');
+const descVolume = v => `${acondDe(v) === 'cx' ? 'Cx/' : 'Emb/'} ${v.descricao || VOL_TIPO[v.tipo]}`;
+const CONTEUDOS_CAIXA = ['Livros','Roupas','Roupas de cama e banho','Sapatos','Louças','Copos e taças','Utensílios de cozinha','Panelas',
+  'Alimentos','Bebidas','Materiais de escritório','Documentos','Brinquedos','Decoração','Quadros pequenos','Eletrônicos pequenos',
+  'Ferramentas','Produtos de limpeza','Produtos de higiene','Cabides','Diversos'];
 const COMODOS = ['Sala','Cozinha','Quarto 1','Quarto 2','Quarto 3','Suíte','Banheiro','Escritório','Área de serviço','Varanda','Garagem','Depósito'];
 const AREAS_VISTORIA = ['Portaria','Hall de entrada','Elevador — piso','Elevador — paredes/espelho','Elevador — porta/painel','Corredor','Escada','Garagem/doca','Porta do imóvel','Piso do imóvel','Paredes do imóvel','Batentes e rodapés'];
 const OCOR_TIPO = {avaria:'Avaria em item',extravio:'Extravio',atraso:'Atraso',imovel:'Dano ao imóvel',outro:'Outro'};
@@ -1357,12 +1377,17 @@ async function abaInventario(el, m){
   <div class="acoes" style="margin-bottom:12px">
     <button class="btn prim" id="bnv">${ic('mais2')}Novo volume</button>
     <button class="btn" id="betq" ${r.total?'':'disabled'}>${ic('impressora')}Etiquetas QR</button>
+    <button class="btn" id="binvdoc" ${r.total?'':'disabled'}>${ic('doc')}Formulário de inventário</button>
     ${m.tipo === 'internacional' ? `<button class="btn" id="bpack" ${r.total?'':'disabled'}>${ic('doc')}Packing list (PT/EN)</button>` : ''}
     ${!ass && r.total ? `<button class="btn esc" id="bassinv">${ic('caneta')}Cliente confere e assina</button>` : ''}
   </div>
   ${ass ? `<div class="alerta-box verde small">${ic('check','style="width:18px;flex:none"')}<div>Inventário conferido e assinado por <b>${esc(ass.nome)}</b> em ${fmtDH(ass.assinado_em)}.</div></div>` : ''}
+  <div class="card" style="margin-bottom:12px;padding:12px 14px"><div class="grade g2">
+    <label class="campo" style="margin:0"><span>Ordem de serviço</span><input id="ios" value="${esc(m.os_numero || '')}" placeholder="${esc(m.codigo)}"></label>
+    <label class="campo" style="margin:0"><span>Inventarista</span><input id="iinv" value="${esc(m.inventarista || '')}" placeholder="${esc(PERFIL?.nome || '')}" list="dl-equipe"></label></div>
+    <datalist id="dl-equipe">${nomesEquipe(m).map(n => `<option value="${esc(n)}">`).join('')}</datalist></div>
   <div class="grade g2 g4" style="margin-bottom:12px">
-    <div class="kpi"><div class="v">${r.total}</div><div class="l">Volumes</div></div>
+    <div class="kpi"><div class="v">${r.total}</div><div class="l">Volumes (${r.lista.filter(v => acondDe(v) === 'cx').length} Cx · ${r.lista.filter(v => acondDe(v) === 'emb').length} Emb)</div></div>
     <div class="kpi"><div class="v">${r.comAvaria}</div><div class="l">Com avaria prévia</div></div>
     <div class="kpi"><div class="v">${lista('fotos', f => f.mudanca_id === m.id && f.ref_tipo === 'volume').length}</div><div class="l">Fotos</div></div>
     <div class="kpi"><div class="v" style="font-size:20px">${ehGestor() ? moeda(soma(r.lista, v => v.valor_declarado)) : '—'}</div><div class="l">Valor declarado</div></div>
@@ -1371,9 +1396,9 @@ async function abaInventario(el, m){
     <input type="search" id="binv" placeholder="Filtrar por número, descrição ou cômodo" value="${esc(FILTRO_INV)}" style="margin:4px 0 6px">
     <div class="lista">${vis.map(v => { const nf = fotosDe('volume', v.id).length; const av = v.avarias_previas||[];
       return `<div class="item" data-vol="${v.id}" style="cursor:pointer"><div class="num-vol ${v.status}">${v.numero}</div>
-      <div class="cresce"><div class="t">${esc(v.descricao || VOL_TIPO[v.tipo])}</div>
-      <div class="s">${VOL_TIPO[v.tipo]} · ${esc(v.comodo_origem||'?')} → ${esc(v.comodo_destino||'?')} · ${nf} foto${nf===1?'':'s'}</div>
-      ${av.length ? `<div class="s" style="color:var(--ambar)">Avaria prévia: ${av.map(a => esc(a.tipo+(a.local?' ('+a.local+')':''))).join(', ')}</div>` : ''}</div>
+      <div class="cresce"><div class="t">${esc(descVolume(v))}</div>
+      <div class="s">${VOL_TIPO[v.tipo]} · ${esc(v.comodo_origem||'?')} → ${esc(v.comodo_destino||'?')} · ${nf} foto${nf===1?'':'s'}${v.embalado_por?' · emb. '+esc(v.embalado_por):''}</div>
+      ${av.length ? `<div class="s" style="color:var(--ambar)">Estado na origem: <b>${av.map(a => esc(codAvaria(a))).join(', ')}</b></div>` : ''}</div>
       <span class="tag ${v.status==='entregue'?'verde':v.status==='extraviado'?'verm':v.status==='carregado'?'azul':''}">${VOL_STATUS[v.status]}</span></div>`; }).join('') || `<div class="vazio"><b>${r.total ? 'Nada encontrado' : 'Nenhum volume ainda'}</b>${r.total ? '' : 'Cadastre cada caixa ou móvel, fotografe e registre avarias que já existem.'}</div>`}</div>
   </div>`;
   $('#bnv').onclick = () => modalVolume(m);
@@ -1381,6 +1406,9 @@ async function abaInventario(el, m){
   $$('[data-vol]', el).forEach(x => x.onclick = () => modalVolume(m, pega('volumes', x.dataset.vol)));
   $('#betq') && ($('#betq').onclick = () => escolherEtiquetas(m));
   $('#bpack') && ($('#bpack').onclick = () => imprimir(docPackingList(m)));
+  $('#binvdoc') && ($('#binvdoc').onclick = () => imprimir(docInventario(pega('mudancas', m.id))));
+  $('#ios').onchange = e => salvar('mudancas', { id: m.id, os_numero: nulo(e.target.value.trim()) });
+  $('#iinv').onchange = e => salvar('mudancas', { id: m.id, inventarista: nulo(e.target.value.trim()) });
   $('#bassinv') && ($('#bassinv').onclick = async () => { if (await coletarAssinatura(m, 'inventario', 'Conferência do inventário', config().termo_inventario)) { toast('Inventário assinado', 'ok'); render(); } });
 }
 function modalVolume(m, v){
@@ -1390,27 +1418,42 @@ function modalVolume(m, v){
   let avarias = [...(v.avarias_previas||[])];
   const opCom = sel => COMODOS.map(x => `<option ${x===sel?'selected':''}>${x}</option>`).join('') + (sel && !COMODOS.includes(sel) ? `<option selected>${esc(sel)}</option>` : '');
   const fm = modal(novo ? `Volume nº ${v.numero}` : `Volume nº ${v.numero}`, `<form>
+    <div class="chips" style="margin-bottom:8px" id="vacond">${[['cx','Cx/ — vai em caixa'],['emb','Emb/ — embalado (móvel, cadeira, eletro)']].map(([k,n]) => `<span class="chip ${acondDe(v)===k?'on':''}" data-a="${k}" style="font-weight:700">${n}</span>`).join('')}</div>
     <div class="chips" style="margin-bottom:12px" id="vtipo">${Object.entries(VOL_TIPO).map(([k,n]) => `<span class="chip ${v.tipo===k?'on':''}" data-k="${k}">${n}</span>`).join('')}</div>
     <div class="grade g2"><label class="campo"><span>Cômodo de origem</span><select name="comodo_origem">${opCom(v.comodo_origem)}</select></label>
     <label class="campo"><span>Cômodo de destino</span><select name="comodo_destino">${opCom(v.comodo_destino)}</select></label></div>
-    <span class="small" style="font-weight:600;color:var(--tinta-2)">Escolha o móvel da lista do ambiente</span>
+    <span class="small" style="font-weight:600;color:var(--tinta-2)" id="vsugt">Escolha da lista</span>
     <div id="vsug" style="margin:6px 0 10px;max-height:170px;overflow:auto"></div>
     <label class="campo"><span>Descrição / conteúdo — ou digite se não estiver na lista</span><input name="descricao" value="${esc(v.descricao||'')}" placeholder="Ex.: Sofá 3 lugares cinza / Louças da cozinha"></label>
+    <label class="campo"><span>Embalado por</span><input name="embalado_por" list="dl-emb" value="${esc(v.embalado_por || (novo ? (ultimo?.embalado_por || '') : ''))}" placeholder="Nome de quem embalou"></label>
+    <datalist id="dl-emb">${nomesEquipe(m).map(n => `<option value="${esc(n)}">`).join('')}</datalist>
     ${ehGestor() || novo ? `<label class="campo"><span>Valor declarado (R$, opcional)</span><input type="number" step="0.01" name="valor_declarado" value="${esc(v.valor_declarado??'')}"></label>` : ''}
-    <span class="small" style="font-weight:600;color:var(--tinta-2)">Avarias que JÁ existem (antes da mudança)</span>
+    <span class="small" style="font-weight:600;color:var(--tinta-2)">Estado na origem — avarias que JÁ existem</span>
     <div id="vav" style="margin:6px 0 8px"></div>
-    <div class="grade g2" style="margin-bottom:12px"><select id="avt"><option value="">Tipo de avaria…</option>${AVARIA_TIPOS.map(x => `<option>${x}</option>`).join('')}</select>
-      <select id="avl"><option value="">Local…</option>${AVARIA_LOCAIS.map(x => `<option>${x}</option>`).join('')}</select></div>
+    <div class="grade g2" style="margin-bottom:12px"><select id="avt"><option value="">Avaria…</option>${AVARIAS.map(([c,n]) => `<option value="${c}">${c} — ${n}</option>`).join('')}</select>
+      <select id="avl"><option value="">Localização (opcional)…</option>${LOCAIS_AV.map(([c,n]) => `<option value="${c}">${c} — ${n}</option>`).join('')}</select></div>
     <span class="small" style="font-weight:600;color:var(--tinta-2)">Fotos ${novo ? '(salve para fotografar com carimbo do número)' : ''}</span>
     <div id="vfotos" style="margin:6px 0 14px"></div>
     ${!novo ? `<label class="campo"><span>Situação</span><select name="status">${Object.entries(VOL_STATUS).map(([k,n]) => `<option value="${k}" ${v.status===k?'selected':''}>${n}</option>`).join('')}</select></label>` : ''}
     <div class="acoes" style="justify-content:space-between">${!novo ? `<button type="button" class="btn perigo" data-del>${ic('lixo')}Excluir</button>` : '<span></span>'}
     <div class="acoes">${novo ? `<button class="btn" data-mais="1">Salvar e próximo</button>` : `<button type="button" class="btn" data-etq>${ic('impressora')}Etiqueta</button>`}<button class="btn prim">${ic('check')}${novo?'Salvar e fotografar':'Salvar'}</button></div></div>
   </form>`, (c, fechar) => {
-    let tipo = v.tipo, proximo = false;
-    $('#vtipo', c).onclick = e => { const k = e.target.dataset.k; if (!k) return; tipo = k; $$('#vtipo .chip', c).forEach(x => x.classList.toggle('on', x.dataset.k === k)); };
+    let tipo = v.tipo, acond = acondDe(v), proximo = false;
+    const marcaAcond = k => { acond = k; $$('#vacond .chip', c).forEach(x => x.classList.toggle('on', x.dataset.a === k)); };
     const marcaTipo = k => { tipo = k; $$('#vtipo .chip', c).forEach(x => x.classList.toggle('on', x.dataset.k === k)); };
+    $('#vtipo', c).onclick = e => { const k = e.target.dataset.k; if (!k) return; marcaTipo(k); if (k === 'caixa') marcaAcond('cx'); else if (k !== 'fragil') marcaAcond('emb'); desSug(); };
+    $('#vacond', c).onclick = e => { const k = e.target.closest('[data-a]')?.dataset.a; if (!k) return; marcaAcond(k);
+      if (k === 'cx' && !['caixa','fragil'].includes(tipo)) marcaTipo('caixa'); if (k === 'emb' && tipo === 'caixa') marcaTipo('movel'); desSug(); };
     const desSug = () => {
+      if (acond === 'cx') {
+        $('#vsugt', c).textContent = 'O que vai dentro da caixa';
+        $('#vsug', c).innerHTML = `<div class="chips">${CONTEUDOS_CAIXA.map(n => `<span class="chip" data-cx="${esc(n)}">${esc(n)}</span>`).join('')}</div>`;
+        $$('[data-cx]', c).forEach(ch => ch.onclick = () => { const inp = $('[name=descricao]', c); const n = ch.dataset.cx;
+          inp.value = inp.value && !CONTEUDOS_CAIXA.includes(inp.value) && !inp.value.includes(n) ? inp.value + ', ' + n.toLowerCase() : n; inp.focus();
+          if (/Louças|Copos|Quadros/.test(n)) marcaTipo('fragil'); });
+        return;
+      }
+      $('#vsugt', c).textContent = 'Escolha o móvel da lista do ambiente';
       const com = $('[name=comodo_origem]', c).value; const amb = ambienteDe(com);
       const orc = lista('orcamento_itens', i => i.mudanca_id === m.id && i.comodo === com);
       const feitos = lista('volumes', x => x.mudanca_id === m.id && x.comodo_origem === com && x.id !== v.id).map(x => (x.descricao||'').toLowerCase());
@@ -1421,15 +1464,18 @@ function modalVolume(m, v){
         ${orc.length ? '<div class="tiny muted" style="margin-top:4px">Em destaque: itens do orçamento que ainda faltam etiquetar neste cômodo.</div>' : ''}`;
       $$('[data-sug]', c).forEach(ch => ch.onclick = () => { const n = ch.dataset.sug; const inp = $('[name=descricao]', c);
         inp.value = n; inp.focus(); const grupo = Object.keys(CATALOGO).find(g => CATALOGO[g].some(x => x[0] === n));
-        marcaTipo(tipoSugerido(n, grupo)); });
+        const t = tipoSugerido(n, grupo); marcaTipo(t); marcaAcond(t === 'caixa' ? 'cx' : 'emb'); if (t === 'caixa') desSug(); });
     };
     $('[name=comodo_origem]', c).addEventListener('change', e => { const d = $('[name=comodo_destino]', c); if (d && !pega('volumes', v.id)) d.value = e.target.value; desSug(); });
     desSug();
-    const desAv = () => { $('#vav', c).innerHTML = avarias.length ? `<div class="chips">${avarias.map((a,i) => `<span class="chip on" data-rav="${i}">${esc(a.tipo)}${a.local?' · '+esc(a.local):''} ✕</span>`).join('')}</div>` : '<span class="small muted">Nenhuma — item em bom estado</span>';
+    const desAv = () => { $('#vav', c).innerHTML = avarias.length ? `<div class="chips">${avarias.map((a,i) => `<span class="chip on" data-rav="${i}"><b>${esc(codAvaria(a))}</b>&nbsp;${esc(textoAvaria(a).replace(/^\S+ /,''))} ✕</span>`).join('')}</div>` : '<span class="small muted">Nenhuma — item em bom estado</span>';
       $$('[data-rav]', c).forEach(x => x.onclick = () => { avarias.splice(Number(x.dataset.rav), 1); desAv(); }); };
     desAv();
-    const addAv = () => { const t = $('#avt', c).value, l = $('#avl', c).value; if (!t) return; avarias.push({ tipo: t, local: l || null }); $('#avt', c).value = ''; $('#avl', c).value = ''; desAv(); };
-    $('#avt', c).onchange = addAv; $('#avl', c).onchange = () => { if ($('#avt', c).value) addAv(); };
+    const addAv = () => { const t = $('#avt', c).value, l = $('#avl', c).value; if (!t) return; const at = AVARIAS.find(x => x[0] === t), al = LOCAIS_AV.find(x => String(x[0]) === l);
+      avarias.push({ cod: t, tipo: at[1], locCod: al ? al[0] : null, local: al ? al[1] : null }); $('#avt', c).value = ''; $('#avl', c).value = ''; desAv(); };
+    $('#avt', c).onchange = addAv;
+    $('#avl', c).onchange = () => { if ($('#avt', c).value) return addAv(); const ult = avarias[avarias.length - 1]; const al = LOCAIS_AV.find(x => String(x[0]) === $('#avl', c).value);
+      if (ult && al && ult.locCod == null) { ult.locCod = al[0]; ult.local = al[1]; $('#avl', c).value = ''; desAv(); } };
     const desFotos = () => {
       if (novo && !pega('volumes', v.id)) { $('#vfotos', c).innerHTML = '<div class="small muted">—</div>'; return; }
       $('#vfotos', c).innerHTML = htmlFotos(fotosDe('volume', v.id), { editar: true });
@@ -1443,7 +1489,7 @@ function modalVolume(m, v){
     $$('button.prim', c).forEach(b => b.addEventListener('click', () => { proximo = false; }));
     const salvarVol = async (form) => { const d = form2obj(form);
       const ehNovo = !pega('volumes', v.id);
-      await salvar('volumes', { id: v.id, mudanca_id: m.id, numero: v.numero, tipo, descricao: nulo(d.descricao), comodo_origem: d.comodo_origem, comodo_destino: d.comodo_destino,
+      await salvar('volumes', { id: v.id, mudanca_id: m.id, numero: v.numero, tipo, acondicionamento: acond, embalado_por: nulo(d.embalado_por), descricao: nulo(d.descricao), comodo_origem: d.comodo_origem, comodo_destino: d.comodo_destino,
         valor_declarado: d.valor_declarado !== undefined ? numOuNulo(d.valor_declarado) : v.valor_declarado ?? null, avarias_previas: avarias, status: d.status || v.status });
       if (ehNovo && v.numero === 1) await evento(m.id, 'inventario', 'Início do inventário e etiquetagem dos volumes');
       return ehNovo; };
@@ -1457,6 +1503,12 @@ function modalVolume(m, v){
     $('[data-etq]', c) && ($('[data-etq]', c).onclick = () => imprimir(docEtiquetas(m, [pega('volumes', v.id)])));
   });
   fm.addEventListener('fechou', () => { if (ROTA_ATUAL.includes('/inventario')) render(); });
+}
+function nomesEquipe(m){
+  const n = new Set((m.equipe || []).map(p => p.nome).filter(Boolean));
+  if (PERFIL?.nome) n.add(PERFIL.nome);
+  lista('volumes', v => v.mudanca_id === m.id && v.embalado_por).forEach(v => n.add(v.embalado_por));
+  return [...n];
 }
 function escolherEtiquetas(m){
   const r = resumoVolumes(m.id);
@@ -1610,7 +1662,7 @@ async function abaOcorrencias(el, m){
   ${ocs.map(o => { const v = pega('volumes', o.volume_id); const antes = v ? fotosDe('volume', v.id) : []; const depois = fotosDe('ocorrencia', o.id);
     return `<div class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><h3 style="margin:0">${OCOR_TIPO[o.tipo]}${v?` — volume ${v.numero}`:''}</h3><div class="small muted">${fmtDH(o.created_at)}</div></div><span class="tag ${o.status==='resolvida'?'verde':o.status==='aberta'?'verm':'amb'}">${OCOR_STATUS[o.status]}</span></div>
     <p style="margin:10px 0">${esc(o.descricao)}</p>
-    ${v ? `<div class="grade g2"><div><div class="small" style="font-weight:700;margin-bottom:4px">ANTES (inventário)</div>${antes.length ? htmlFotos(antes) : '<span class="small muted">Sem fotos</span>'}${(v.avarias_previas||[]).length ? `<div class="tiny" style="color:var(--ambar);margin-top:4px">Avaria prévia: ${v.avarias_previas.map(a => esc(a.tipo)).join(', ')}</div>` : '<div class="tiny muted" style="margin-top:4px">Sem avaria prévia registrada</div>'}</div>
+    ${v ? `<div class="grade g2"><div><div class="small" style="font-weight:700;margin-bottom:4px">ANTES (inventário)</div>${antes.length ? htmlFotos(antes) : '<span class="small muted">Sem fotos</span>'}${(v.avarias_previas||[]).length ? `<div class="tiny" style="color:var(--ambar);margin-top:4px">Estado na origem: ${v.avarias_previas.map(a => esc(codAvaria(a))).join(', ')}</div>` : '<div class="tiny muted" style="margin-top:4px">Sem avaria prévia registrada</div>'}</div>
       <div><div class="small" style="font-weight:700;margin-bottom:4px">DEPOIS</div>${depois.length ? htmlFotos(depois) : '<span class="small muted">Sem fotos</span>'}</div></div>` : (depois.length ? htmlFotos(depois) : '')}
     ${o.resolucao || o.responsavel ? `<div class="alerta-box ${o.status==='resolvida'?'verde':'amb'} small" style="margin-top:10px;display:block">${o.responsavel?`<b>Responsabilidade:</b> ${esc(o.responsavel)}<br>`:''}${o.valor_indenizacao?`<b>Indenização:</b> ${moeda(o.valor_indenizacao)}<br>`:''}${o.resolucao?esc(o.resolucao):''}</div>` : ''}
     <div class="acoes" style="margin-top:10px"><button class="btn peq" data-oc="${o.id}">${ic('caneta')}Atualizar</button></div></div>`; }).join('') || '<div class="card"><div class="vazio"><b>Nenhuma ocorrência</b>Avarias, extravios, atrasos ou danos ao imóvel ficam registrados aqui com fotos de antes e depois.</div></div>'}`;
@@ -1666,6 +1718,7 @@ async function abaLaudo(el, m){
     <div class="card" style="margin-top:0"><h3>Documentos</h3>
       <div class="lista">
         <a class="item" href="#" data-doc="laudo"><div class="cresce"><div class="t">Laudo completo de vistoria da mudança</div><div class="s">Inventário, fotos, vistorias, ocorrências, assinaturas e linha do tempo</div></div>${ic('impressora','style="width:20px"')}</a>
+        <a class="item" href="#" data-doc="inventario"><div class="cresce"><div class="t">Formulário de inventário</div><div class="s">Modelo ${esc(MARCA.curto)}: Cx/Emb, códigos de estado e embalado por</div></div>${ic('impressora','style="width:20px"')}</a>
         <a class="item" href="#" data-doc="contrato"><div class="cresce"><div class="t">Contrato de prestação de serviços</div><div class="s">Partes, serviço, valores, cláusulas e assinatura</div></div>${ic('impressora','style="width:20px"')}</a>
         <a class="item" href="#" data-doc="proposta"><div class="cresce"><div class="t">Proposta comercial</div><div class="s">Cubagem, itens e valores</div></div>${ic('impressora','style="width:20px"')}</a>
         <a class="item" href="#" data-doc="etq"><div class="cresce"><div class="t">Etiquetas QR</div><div class="s">${r.total} volumes</div></div>${ic('impressora','style="width:20px"')}</a>
@@ -1675,7 +1728,7 @@ async function abaLaudo(el, m){
       <p class="tiny muted" style="margin-bottom:0">Na janela de impressão, escolha “Salvar como PDF” para enviar por WhatsApp ou e-mail.</p></div>
   </div>`;
   $$('[data-doc]', el).forEach(a => a.onclick = e => { e.preventDefault(); const mm = pega('mudancas', m.id);
-    ({ laudo: () => imprimir(docLaudo(mm)), contrato: () => imprimir(docContrato(mm)), proposta: () => imprimir(docProposta(mm)), etq: () => imprimir(docEtiquetas(mm, resumoVolumes(mm.id).lista)), pack: () => imprimir(docPackingList(mm)) })[a.dataset.doc](); });
+    ({ inventario: () => imprimir(docInventario(mm)), laudo: () => imprimir(docLaudo(mm)), contrato: () => imprimir(docContrato(mm)), proposta: () => imprimir(docProposta(mm)), etq: () => imprimir(docEtiquetas(mm, resumoVolumes(mm.id).lista)), pack: () => imprimir(docPackingList(mm)) })[a.dataset.doc](); });
 }
 
 /* ---------------- documentos para impressão ---------------- */
@@ -1728,11 +1781,49 @@ function docContrato(m){
   ${ass.length ? `<div style="margin-top:22px;width:46%;border-top:1px solid #333;padding-top:4px;text-align:center">CONTRATADA — ${esc(cfg.empresa_nome)}</div>` : ''}
   ${docRod()}</div>`;
 }
+function docInventario(m){
+  const cfg = config(); const cli = pega('clientes', m.cliente_id) || {}; const r = resumoVolumes(m.id);
+  const assO = lista('assinaturas', a => a.mudanca_id === m.id && a.etapa === 'inventario')[0];
+  const assD = lista('assinaturas', a => a.mudanca_id === m.id && a.etapa === 'entrega')[0];
+  const os = m.os_numero || m.codigo; const inv = m.inventarista || (m.equipe || [])[0]?.nome || '';
+  const porPag = 18; const pags = Math.max(1, Math.ceil(r.lista.length / porPag));
+  const dataO = assO ? fmtData(assO.assinado_em) : (r.lista[0]?.updated_at ? fmtData(r.lista[0].updated_at) : '');
+  const st = 'border:1px solid #333;padding:3px 6px;vertical-align:top';
+  const legenda = `<table style="width:100%;border-collapse:collapse;font-size:8.6px;margin:0"><tr>
+    <td style="${st};width:66%"><div style="background:#555;color:#fff;font-weight:700;text-align:center;padding:1px;margin:-3px -6px 3px">NOMENCLATURA DOS CÓDIGOS</div>
+      <div style="columns:3;column-gap:8px">${AVARIAS.map(([c,n,e]) => `<div>${n} - <b>${c}</b> - ${e}</div>`).join('')}</div></td>
+    <td style="${st}"><div style="background:#555;color:#fff;font-weight:700;text-align:center;padding:1px;margin:-3px -6px 3px">CÓDIGO DE LOCALIZAÇÃO</div>
+      <div style="columns:2;column-gap:8px">${LOCAIS_AV.map(([c,n,e]) => `<div>${n} - <b>${c}</b> ${e}</div>`).join('')}</div></td></tr></table>`;
+  const pagina = (i) => { const vs = r.lista.slice(i * porPag, (i + 1) * porPag); const vazias = porPag - vs.length;
+    return `<div class="doc" style="${i ? 'page-break-before:always;' : ''}font-size:11px">
+    <table style="width:100%;border-collapse:collapse"><tr>
+      <td style="${st};width:26%;vertical-align:middle"><div style="display:flex;align-items:center;gap:6px">${LOGO.replace('<svg','<svg style="width:38px;height:38px"')}<div><b style="font-family:var(--fonte-t);font-size:17px;color:var(--oliva);line-height:1;display:block">${esc(MARCA.nome)}</b><span style="font-family:var(--fonte-t);font-weight:700;font-size:11px">${esc(MARCA.sub)}</span></div></div></td>
+      <td style="${st};text-align:center;vertical-align:middle;font-size:17px;font-weight:700;letter-spacing:5px">INVENTÁRIO</td>
+      <td style="${st};width:24%">PAG.: <b>${i + 1}</b><br>Nº DE PAG.: <b>${pags}</b></td></tr></table>
+    <table style="width:100%;border-collapse:collapse;margin-top:-1px"><tr>
+      <td style="${st};width:16%;background:#555;color:#fff;font-weight:700;text-align:right;font-size:10px;line-height:1.55">CLIENTE:<br>ORDEM DE SERVIÇO:<br>ORIGEM:<br>DESTINO:</td>
+      <td style="${st};line-height:1.55">${esc(cli.nome || '')}<br>${esc(os)}<br>${esc(m.origem_endereco || '')}<br>${esc(m.destino_endereco || '')}</td>
+      <td style="${st};width:24%;line-height:1.55">DATA: <b>${dataO || fmtData(m.data_prevista)}</b><br>INVENTARISTA:<br><b>${esc(inv)}</b></td></tr></table>
+    ${legenda}
+    <table style="width:100%;border-collapse:collapse;margin-top:-1px"><thead><tr>${[['ITEM','7%'],['DESCRIÇÃO',''],['ESTADO NA ORIGEM','15%'],['EMBALADO POR','15%']].map(([t,w]) => `<th style="${st};${w?'width:'+w+';':''}text-align:center;background:#555;color:#fff;font-size:10px">${t}</th>`).join('')}</tr></thead>
+      <tbody>${vs.map(v => `<tr><td style="${st};text-align:center;font-weight:700">${v.numero}</td><td style="${st}">${esc(descVolume(v))}${v.comodo_origem ? ` <span style="color:#666">(${esc(v.comodo_origem)}${v.comodo_destino && v.comodo_destino !== v.comodo_origem ? ' → ' + esc(v.comodo_destino) : ''})</span>` : ''}</td>
+        <td style="${st};text-align:center;font-weight:700">${(v.avarias_previas || []).map(codAvaria).map(esc).join(', ')}</td><td style="${st};text-align:center">${esc(v.embalado_por || '')}</td></tr>`).join('')}
+      ${(`<tr><td style="${st};height:20px"></td><td style="${st}"></td><td style="${st}"></td><td style="${st}"></td></tr>`).repeat(Math.max(0, vazias))}</tbody></table>
+    <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:10px"><tr>
+      <td style="${st};width:50%;background:#555;color:#fff"><b>ORIGEM</b> – Confirmo que esta é a relação completa e correta de bens entregues a ${esc(cfg.empresa_nome)}.</td>
+      <td style="${st};background:#555;color:#fff"><b>DESTINO</b> – Confirmo que todos os bens supra relacionados foram entregues em boa ordem.</td></tr>
+      <tr><td style="${st};padding:0"><table style="width:100%;border-collapse:collapse"><tr><td style="${st};border-width:0 1px 1px 0;height:46px">Assinatura Equipe<br><b>${esc(inv)}</b></td><td style="${st};border-width:0 0 1px 0;width:32%">Data<br><b>${assO ? fmtData(assO.assinado_em) : ''}</b></td></tr>
+        <tr><td style="${st};border-width:0 1px 0 0;height:54px">Assinatura Cliente${assO ? `<br><img src="${assO.imagem}" style="height:38px"><br><b>${esc(assO.nome)}</b>` : ''}</td><td style="${st};border-width:0">Data<br><b>${assO ? fmtData(assO.assinado_em) : ''}</b></td></tr></table></td>
+      <td style="${st};padding:0"><table style="width:100%;border-collapse:collapse"><tr><td style="${st};border-width:0 1px 1px 0;height:46px">Assinatura Equipe${assD ? `<br><b>${esc(inv)}</b>` : ''}</td><td style="${st};border-width:0 0 1px 0;width:32%">Data<br><b>${assD ? fmtData(assD.assinado_em) : ''}</b></td></tr>
+        <tr><td style="${st};border-width:0 1px 0 0;height:54px">Assinatura Cliente${assD ? `<br><img src="${assD.imagem}" style="height:38px"><br><b>${esc(assD.nome)}</b>` : ''}</td><td style="${st};border-width:0">Data<br><b>${assD ? fmtData(assD.assinado_em) : ''}</b></td></tr></table></td></tr></table>
+    <div class="drod" style="margin-top:6px">${rodapeDevHTML(true)}</div></div>`; };
+  return Array.from({ length: pags }, (_, i) => pagina(i)).join('');
+}
 function docEtiquetas(m, vs){
   const cli = pega('clientes', m.cliente_id);
   const etq = v => `<div class="etq"><div class="qr">${qrSVG(conteudoQR(v))}</div><div style="display:flex;flex-direction:column;min-width:0;flex:1">
     <div class="cod">${esc(m.codigo)} · ${esc((cli?.nome||'').split(' ')[0])}</div><div class="n">${v.numero}<span style="font-size:16px;color:#666">/${resumoVolumes(m.id).total}</span></div>
-    <div class="dest">→ ${esc(v.comodo_destino||'')}</div><div style="font-size:10.5px;color:#333;overflow:hidden;max-height:28px">${esc(v.descricao||VOL_TIPO[v.tipo])}</div>
+    <div class="dest">→ ${esc(v.comodo_destino||'')}</div><div style="font-size:10.5px;color:#333;overflow:hidden;max-height:28px">${esc(descVolume(v))}</div>
     ${['fragil','eletro','especial'].includes(v.tipo) ? `<div><span class="fr">${v.tipo==='fragil'?'FRÁGIL':v.tipo==='eletro'?'ELETRÔNICO':'ESPECIAL'}</span></div>` : ''}
     <div class="mm">${esc(MARCA.empresa)}</div></div></div>`;
   let html = '';
@@ -1744,7 +1835,7 @@ function docPackingList(m){
   return `<div class="doc">${docCab('Packing List / Lista de Embalagem', m)}
   <div class="g2"><div><b>Shipper / Remetente:</b> ${esc(cli.nome||'')}</div><div><b>Document:</b> ${esc(cli.documento||'')}</div><div><b>From / Origem:</b> ${esc(m.origem_endereco||'')}</div><div><b>To / Destino:</b> ${esc(m.destino_endereco||'')}</div></div>
   <table style="margin-top:8px"><thead><tr><th>Nº</th><th>Tipo / Type</th><th>Descrição / Description</th><th>Cômodo / Room</th><th>Condição / Condition</th><th>Valor / Value (BRL)</th></tr></thead><tbody>
-  ${r.lista.map(v => `<tr><td>${v.numero}</td><td>${VOL_TIPO[v.tipo]}</td><td>${esc(v.descricao||'')}</td><td>${esc(v.comodo_origem||'')}</td><td>${(v.avarias_previas||[]).length ? esc(v.avarias_previas.map(a => a.tipo).join(', ')) : 'Bom / Good'}</td><td style="text-align:right">${v.valor_declarado ? num(v.valor_declarado,2) : '—'}</td></tr>`).join('')}
+  ${r.lista.map(v => `<tr><td>${v.numero}</td><td>${VOL_TIPO[v.tipo]}</td><td>${esc(descVolume(v))}</td><td>${esc(v.comodo_origem||'')}</td><td>${(v.avarias_previas||[]).length ? esc(v.avarias_previas.map(codAvaria).join(', ')) : 'Bom / Good'}</td><td style="text-align:right">${v.valor_declarado ? num(v.valor_declarado,2) : '—'}</td></tr>`).join('')}
   <tr><td colspan="5"><b>Total: ${r.total} volumes / packages</b></td><td style="text-align:right"><b>${num(soma(r.lista, v => v.valor_declarado),2)}</b></td></tr></tbody></table>
   <p style="margin-top:14px">Declaro que os bens acima são de uso pessoal e doméstico, usados, sem finalidade comercial. / I declare that the goods listed above are used personal and household effects, not intended for sale.</p>
   <div style="margin-top:30px;border-top:1px solid #333;width:280px;padding-top:4px">Assinatura / Signature</div>${docRod()}</div>`;
@@ -1763,7 +1854,7 @@ function docLaudo(m){
   <div><b>Volumes:</b> ${r.total} · entregues ${r.entregue} · armazenados ${r.armazenado} · extraviados ${r.extraviado}</div><div><b>Cubagem:</b> ${num(m.cubagem_m3||0,2)} m³${m.seguro_valor_declarado?` · <b>Valor declarado:</b> ${moeda(m.seguro_valor_declarado)}`:''}</div></div>
   <h2>1. Inventário dos volumes</h2>
   <table><thead><tr><th>Nº</th><th>Tipo</th><th>Descrição</th><th>Origem → Destino</th><th>Avarias prévias</th><th>Carregado</th><th>Entregue</th><th>Situação</th></tr></thead><tbody>
-  ${r.lista.map(v => `<tr><td><b>${v.numero}</b></td><td>${VOL_TIPO[v.tipo]}</td><td>${esc(v.descricao||'')}</td><td>${esc(v.comodo_origem||'')} → ${esc(v.comodo_destino||'')}</td><td>${(v.avarias_previas||[]).map(a => esc(a.tipo+(a.local?' ('+a.local+')':''))).join(', ')||'—'}</td><td>${v.carregado_em?fmtDH(v.carregado_em):'—'}</td><td>${v.entregue_em?fmtDH(v.entregue_em):'—'}</td><td>${VOL_STATUS[v.status]}</td></tr>`).join('')}</tbody></table>
+  ${r.lista.map(v => `<tr><td><b>${v.numero}</b></td><td>${VOL_TIPO[v.tipo]}</td><td>${esc(descVolume(v))}${v.embalado_por?'<br><span style="color:#666">emb. '+esc(v.embalado_por)+'</span>':''}</td><td>${esc(v.comodo_origem||'')} → ${esc(v.comodo_destino||'')}</td><td>${(v.avarias_previas||[]).map(a => esc(codAvaria(a))).join(', ')||'—'}</td><td>${v.carregado_em?fmtDH(v.carregado_em):'—'}</td><td>${v.entregue_em?fmtDH(v.entregue_em):'—'}</td><td>${VOL_STATUS[v.status]}</td></tr>`).join('')}</tbody></table>
   <h2>2. Registro fotográfico dos volumes</h2>
   ${r.lista.filter(v => fotosDe('volume', v.id).length).map(v => `<div style="margin-bottom:6px;page-break-inside:avoid"><b>Volume ${v.numero}</b> — ${esc(v.descricao||VOL_TIPO[v.tipo])}${docImgs(fotosDe('volume', v.id))}</div>`).join('') || '<p style="color:#888">Sem fotos.</p>'}
   <h2>3. Vistoria do imóvel de origem</h2>${secVist('origem')}
@@ -2085,8 +2176,8 @@ async function telaPortal(token){
       : `<div class="estrelas" id="est">${[1,2,3,4,5].map(n => `<button data-n="${n}" aria-label="${n} estrelas">★</button>`).join('')}</div><textarea id="acom" placeholder="Conte como foi (opcional)" style="margin-top:10px"></textarea><button class="btn prim" id="benv" style="margin-top:10px" disabled>Enviar avaliação</button>`}</div>` : ''}
     <div class="card"><h3>Inventário (${vols.length} volumes)</h3>
       <p class="small muted" style="margin-top:0">Cada volume foi etiquetado com QR code e fotografado antes da retirada. Avarias que já existiam ficam registradas aqui.</p>
-      <div class="lista">${vols.map(v => { const f = fts('volume', v.id); return `<div class="item"><div class="num-vol ${v.status}">${v.numero}</div><div class="cresce"><div class="t">${esc(v.descricao||VOL_TIPO[v.tipo])}</div><div class="s">${esc(v.comodo_origem||'')} → ${esc(v.comodo_destino||'')} · ${VOL_STATUS[v.status]}</div>
-        ${(v.avarias_previas||[]).length ? `<div class="s" style="color:var(--ambar)">Já tinha: ${v.avarias_previas.map(a => esc(a.tipo)).join(', ')}</div>` : ''}
+      <div class="lista">${vols.map(v => { const f = fts('volume', v.id); return `<div class="item"><div class="num-vol ${v.status}">${v.numero}</div><div class="cresce"><div class="t">${esc(descVolume(v))}</div><div class="s">${esc(v.comodo_origem||'')} → ${esc(v.comodo_destino||'')} · ${VOL_STATUS[v.status]}</div>
+        ${(v.avarias_previas||[]).length ? `<div class="s" style="color:var(--ambar)">Já tinha: ${v.avarias_previas.map(a => esc(textoAvaria(a))).join(', ')}</div>` : ''}
         ${f.length ? `<div class="fotos" style="margin-top:6px">${f.map(x => `<a class="f" style="width:54px;height:54px;background-image:url('${furl(x)}')" href="${furl(x)}" target="_blank" rel="noopener"></a>`).join('')}</div>` : ''}</div></div>`; }).join('') || '<div class="vazio">O inventário ainda não foi feito.</div>'}</div></div>
     ${(d.vistorias||[]).length ? `<div class="card"><h3>Vistoria do imóvel</h3><div class="lista">${d.vistorias.map(v => { const f = fts('vistoria', v.id); return `<div class="item"><div class="cresce"><div class="t">${esc(v.area)}</div><div class="s">${v.local} · ${v.momento} · ${v.condicao==='ok'?'sem danos':v.condicao==='dano_previo'?'dano já existente':'dano registrado'}${v.observacao?' — '+esc(v.observacao):''}</div>${f.length ? `<div class="fotos" style="margin-top:6px">${f.map(x => `<a class="f" style="width:54px;height:54px;background-image:url('${furl(x)}')" href="${furl(x)}" target="_blank" rel="noopener"></a>`).join('')}</div>` : ''}</div></div>`; }).join('')}</div></div>` : ''}
     ${(d.ocorrencias||[]).length ? `<div class="card"><h3>Ocorrências</h3>${d.ocorrencias.map(o => `<div class="dupla"><span>${OCOR_TIPO[o.tipo]} — ${esc(o.descricao)}</span><span>${OCOR_STATUS[o.status]}</span></div>${o.resolucao?`<div class="small muted" style="margin-bottom:6px">${esc(o.resolucao)}</div>`:''}`).join('')}</div>` : ''}
@@ -2134,8 +2225,8 @@ async function semearDemo(){
   // 1) Concluída
   const m1 = await novaM({ cliente_id: cl[0].id, tipo: 'residencial', status: 'concluida', origem_endereco: 'Rua das Palmeiras, 120, ap. 52 — Alphaville, Barueri', origem_detalhes: '5º andar, elevador de serviço, mudança permitida 8h–17h', destino_endereco: 'Av. Tenente Marques, 900, casa 14 — Santana de Parnaíba', destino_detalhes: 'Casa térrea, rua estreita', distancia_km: 14, data_prevista: dt(-6), caminhao_id: k1.id, equipe: [{id:p.e1,nome:'Marcos (líder de equipe)'},{id:p.e2,nome:'Rafael'},{id:null,nome:'Diego'}], cubagem_m3: 18.4, valor_orcado: 4890, valor_aprovado: 4890, condicoes_pagamento: '50% na assinatura e 50% no dia da mudança, via PIX', seguro_valor_declarado: 60000, avaliacao_nota: 5, avaliacao_comentario: 'Equipe super cuidadosa, recebi o laudo com todas as fotos. Recomendo!' }, 'm1');
   await itensOrc(m1.id, [['Sala','Sofá 3 lugares',1],['Sala','Rack/painel TV',1],['Sala','TV acima de 50"',1],['Sala','Mesa de jantar 6+ lug.',1],['Sala','Cadeira',6],['Quarto 1','Cama casal',1],['Quarto 1','Guarda-roupa 4-6 portas',1],['Quarto 1','Colchão casal',1],['Quarto 2','Cama solteiro',1],['Cozinha','Geladeira',1],['Cozinha','Fogão',1],['Cozinha','Máquina de lavar',1],['Caixas','Caixa M',40],['Caixas','Caixa G',15],['Especiais','Espelho grande',1]]);
-  const vols1 = [['movel','Sofá 3 lugares cinza','Sala','Sala',[{tipo:'Desgaste',local:'Lateral'}]],['eletro','TV 55" Samsung','Sala','Sala',[]],['movel','Rack com painel','Sala','Sala',[{tipo:'Risco',local:'Tampo'}]],['fragil','Louças e taças','Cozinha','Cozinha',[]],['caixa','Panelas e utensílios','Cozinha','Cozinha',[]],['eletro','Geladeira Brastemp','Cozinha','Cozinha',[{tipo:'Amassado',local:'Lateral'}]],['movel','Guarda-roupa 6 portas (desmontado)','Quarto 1','Suíte',[]],['caixa','Roupas de cama','Quarto 1','Suíte',[]],['caixa','Livros','Quarto 2','Escritório',[]],['especial','Espelho bisotado 1,2 m','Sala','Sala',[]]];
-  for (let i = 0; i < vols1.length; i++) { const [t,d,o,de,av] = vols1[i]; await add('volumes', { mudanca_id: m1.id, numero: i+1, tipo: t, descricao: d, comodo_origem: o, comodo_destino: de, avarias_previas: av, status: 'entregue', carregado_em: dh(-6, 9), entregue_em: dh(-6, 15), valor_declarado: t==='eletro'?3500:null }); }
+  const vols1 = [['movel','Sofá 3 lugares cinza','Sala','Sala',[{cod:'R',tipo:'Roçado',locCod:9,local:'Ao lado'}]],['eletro','TV 55" Samsung','Sala','Sala',[]],['movel','Rack com painel','Sala','Sala',[{cod:'SC',tipo:'Arranhado',locCod:10,local:'Em cima'}]],['fragil','Louças e taças','Cozinha','Cozinha',[]],['caixa','Panelas e utensílios','Cozinha','Cozinha',[]],['eletro','Geladeira Brastemp','Cozinha','Cozinha',[{cod:'D',tipo:'Amassado',locCod:9,local:'Ao lado'}]],['movel','Guarda-roupa 6 portas (desmontado)','Quarto 1','Suíte',[]],['caixa','Roupas de cama','Quarto 1','Suíte',[]],['caixa','Livros','Quarto 2','Escritório',[]],['especial','Espelho bisotado 1,2 m','Sala','Sala',[]]];
+  for (let i = 0; i < vols1.length; i++) { const [t,d,o,de,av] = vols1[i]; await add('volumes', { mudanca_id: m1.id, numero: i+1, tipo: t, descricao: d, comodo_origem: o, comodo_destino: de, avarias_previas: av, acondicionamento: (t === 'caixa' || /Louças/.test(d)) ? 'cx' : 'emb', status: 'entregue', carregado_em: dh(-6, 9), entregue_em: dh(-6, 15), embalado_por: i % 2 ? 'Rafael' : 'Marcos (líder de equipe)', valor_declarado: t==='eletro'?3500:null }); }
   for (const [l,mo,a,cd,obs] of [['origem','antes','Elevador — paredes/espelho','dano_previo','Risco antigo no espelho, canto inferior direito'],['origem','antes','Hall de entrada','ok',''],['origem','depois','Elevador — paredes/espelho','dano_previo','Sem alteração em relação ao início'],['destino','antes','Porta do imóvel','ok',''],['destino','depois','Piso do imóvel','ok','Piso protegido com papelão durante a descarga']]) await add('vistorias_imovel', { mudanca_id: m1.id, local: l, momento: mo, area: a, condicao: cd, observacao: obs || null });
   const vRack = lista('volumes', v => v.mudanca_id === m1.id && v.numero === 3)[0];
   await add('ocorrencias', { mudanca_id: m1.id, volume_id: vRack.id, tipo: 'avaria', descricao: 'Cliente apontou risco no tampo do rack.', status: 'resolvida', responsavel: 'preexistente', resolucao: 'Conferido com a foto do inventário: o risco já existia antes da retirada (avaria prévia registrada e assinada pela cliente). Sem indenização.', created_at: dh(-6, 16) });
@@ -2146,7 +2237,7 @@ async function semearDemo(){
   // 2) Em carregamento hoje
   const m2 = await novaM({ cliente_id: cl[1].id, tipo: 'comercial', status: 'carregamento', origem_endereco: 'Al. Rio Negro, 500, sala 1203 — Alphaville', origem_detalhes: '12º andar, doca com horário agendado 7h–12h', destino_endereco: 'Av. Copacabana, 112, 3º andar — Barueri', destino_detalhes: 'Elevador de carga liberado após 13h', distancia_km: 9, data_prevista: dt(0), caminhao_id: k2.id, equipe: [{id:p.e1,nome:'Marcos (líder de equipe)'},{id:p.e2,nome:'Rafael'}], cubagem_m3: 26, valor_orcado: 7200, valor_aprovado: 7200 }, 'm2');
   await itensOrc(m2.id, [['Escritório','Mesa de escritório',8],['Escritório','Cadeira de escritório',12],['Escritório','Arquivo/gaveteiro',6],['Escritório','Computador + monitor',8],['Caixas','Caixa G',30]]);
-  for (let i = 1; i <= 14; i++) { const t = i<=8 ? 'movel' : i<=12 ? 'eletro' : 'caixa'; await add('volumes', { mudanca_id: m2.id, numero: i, tipo: t, descricao: t==='movel'?`Mesa estação ${i}`:t==='eletro'?`Computador estação ${i-8}`:`Arquivo morto ${i-12}`, comodo_origem: 'Escritório', comodo_destino: 'Escritório', avarias_previas: i===2?[{tipo:'Lascado',local:'Quina'}]:[], status: i<=9?'carregado':'etiquetado', carregado_em: i<=9?dh(0,9):null }); }
+  for (let i = 1; i <= 14; i++) { const t = i<=8 ? 'movel' : i<=12 ? 'eletro' : 'caixa'; await add('volumes', { mudanca_id: m2.id, numero: i, tipo: t, descricao: t==='movel'?`Mesa estação ${i}`:t==='eletro'?`Computador estação ${i-8}`:`Arquivo morto ${i-12}`, comodo_origem: 'Escritório', comodo_destino: 'Escritório', avarias_previas: i===2?[{cod:'CH',tipo:'Lascado',locCod:3,local:'No canto'}]:[], status: i<=9?'carregado':'etiquetado', carregado_em: i<=9?dh(0,9):null }); }
   await add('vistorias_imovel', { mudanca_id: m2.id, local: 'origem', momento: 'antes', area: 'Elevador — piso', condicao: 'ok', observacao: 'Protegido com manta' });
   await ev(m2.id, -4, 'Ordem de serviço aberta — vistoria de orçamento', 10); await ev(m2.id, -2, 'Etapa: Aprovada', 15); await ev(m2.id, 0, 'Etapa: Carregamento', 8);
   await assin(m2.id, 'orcamento', 'Roberto (sócio)', -2); await assin(m2.id, 'inventario', 'Roberto (sócio)', 0);
