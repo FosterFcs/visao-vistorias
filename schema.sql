@@ -417,6 +417,23 @@ create policy p_gmov_all on public.guarda_movimentos for all to authenticated
   using (public.eh_interno()) with check (public.eh_interno());
 
 -- ---------------------------------------------------------------------
+-- Permissões da API (projetos novos do Supabase podem não conceder
+-- acesso automático às tabelas; a segurança fina continua no RLS)
+-- ---------------------------------------------------------------------
+grant usage on schema public to anon, authenticated;
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant execute on function public.meu_papel(), public.eh_interno(), public.eh_gestor(), public.pode_mudanca(uuid) to authenticated;
+
+-- Garante o perfil de quem se cadastrou antes de este script rodar
+-- (o primeiro usuário vira administrador)
+insert into public.perfis (id, nome, papel, ativo)
+select u.id, coalesce(u.raw_user_meta_data->>'nome', split_part(u.email,'@',1)),
+       case when row_number() over (order by u.created_at) = 1 and not exists (select 1 from public.perfis) then 'admin' else 'equipe' end,
+       row_number() over (order by u.created_at) = 1 and not exists (select 1 from public.perfis)
+from auth.users u
+where not exists (select 1 from public.perfis p where p.id = u.id);
+
+-- ---------------------------------------------------------------------
 -- Portal do cliente (acesso por link com token, sem login)
 -- ---------------------------------------------------------------------
 create or replace function public.portal_mudanca(p_token uuid) returns jsonb
