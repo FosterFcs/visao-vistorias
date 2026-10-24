@@ -357,9 +357,9 @@ const CLAUSULAS_PADRAO = `1. OBJETO. A CONTRATADA prestará ao CONTRATANTE o ser
 11. ASSINATURA ELETRÔNICA. As partes reconhecem como válidas as assinaturas eletrônicas coletadas no sistema, com registro de nome, documento, data, hora e localização.
 12. FORO. Fica eleito o foro do domicílio do CONTRATANTE para resolver questões deste contrato.`;
 const CONFIG_PADRAO = {
-  empresa_nome:MARCA.empresa, empresa_cnpj:'', empresa_fone:MARCA.contato.fone,
+  empresa_nome:MARCA.empresa, empresa_razao:MARCA.contato.razao || '', empresa_cnpj:MARCA.contato.cnpj || '', empresa_fone:MARCA.contato.fone,
   empresa_email:MARCA.contato.email, empresa_site:MARCA.contato.site,
-  empresa_endereco:MARCA.contato.endereco, google_review_url:'',
+  empresa_endereco:MARCA.contato.endereco, google_review_url:MARCA.contato.google || '',
   valor_m3:120, valor_km:6, valor_ajudante:180, taxa_embalagem_m3:35, taxa_item_especial:250,
   validade_orcamento_dias:15,
   contrato_pagamento_padrao:'50% na assinatura e 50% no dia da mudança, via PIX ou cartão',
@@ -1611,7 +1611,7 @@ function docContrato(m){
   const ass = lista('assinaturas', a => a.mudanca_id === m.id && a.etapa === 'orcamento');
   return `<div class="doc">${docCab('Contrato de prestação de serviços de mudança', m)}
   <h2>Partes</h2>
-  <p style="margin:0 0 4px"><b>CONTRATADA:</b> ${esc(cfg.empresa_nome)}${cfg.empresa_cnpj?', CNPJ '+esc(cfg.empresa_cnpj):''}${cfg.empresa_endereco?', '+esc(cfg.empresa_endereco):''} · ${esc(cfg.empresa_fone)} · ${esc(cfg.empresa_email)}</p>
+  <p style="margin:0 0 4px"><b>CONTRATADA:</b> ${esc(cfg.empresa_razao || cfg.empresa_nome)}${cfg.empresa_razao && cfg.empresa_razao.toLowerCase() !== String(cfg.empresa_nome).toLowerCase() ? ' (' + esc(cfg.empresa_nome) + ')' : ''}${cfg.empresa_cnpj?', CNPJ '+esc(cfg.empresa_cnpj):''}${cfg.empresa_endereco?', '+esc(cfg.empresa_endereco):''} · ${esc(cfg.empresa_fone)} · ${esc(cfg.empresa_email)}</p>
   <p style="margin:0"><b>CONTRATANTE:</b> ${esc(cli.nome||'')}${cli.documento?', CPF/CNPJ '+esc(cli.documento):''}${cli.telefone?' · '+esc(cli.telefone):''}${cli.email?' · '+esc(cli.email):''}</p>
   <h2>Serviço</h2>${docDadosMudanca(m)}
   <div class="g2" style="margin-top:4px"><div><b>Cubagem estimada:</b> ${num(o.m3,2)} m³ · <b>Veículo:</b> ${esc(o.veic.nome)}</div><div><b>Equipe prevista:</b> ${o.ajud} ajudantes${m.seguro_valor_declarado?` · <b>Valor declarado:</b> ${moeda(m.seguro_valor_declarado)}`:''}</div></div>
@@ -1885,7 +1885,7 @@ async function vConfig(c){
   const campo = (k, n, t='text', extra='') => `<label class="campo"><span>${n}</span><input type="${t}" name="${k}" value="${esc(cfg[k]??'')}" ${extra}></label>`;
   c.innerHTML = `<div class="cab"><div><h1>Configurações</h1></div></div>
   <form id="fcfg">
-  <div class="card"><h3>Empresa</h3><div class="grade md-g2">${campo('empresa_nome','Nome')}${campo('empresa_cnpj','CNPJ')}${campo('empresa_fone','Telefone')}${campo('empresa_email','E-mail','email')}${campo('empresa_site','Site')}${campo('empresa_endereco','Endereço')}</div>
+  <div class="card"><h3>Empresa</h3><div class="grade md-g2">${campo('empresa_nome','Nome fantasia')}${campo('empresa_razao','Razão social')}${campo('empresa_cnpj','CNPJ')}${campo('empresa_fone','Telefone')}${campo('empresa_email','E-mail','email')}${campo('empresa_site','Site')}${campo('empresa_endereco','Endereço')}</div>
     ${campo('google_review_url','Link para avaliação no Google (aparece no portal após a avaliação)','url','placeholder="https://g.page/r/..."')}</div>
   <div class="card"><h3>Tabela de preços do orçamento</h3><div class="grade g2 g3">${campo('valor_m3','R$ por m³','number','step="0.01"')}${campo('valor_km','R$ por km','number','step="0.01"')}${campo('valor_ajudante','R$ por ajudante','number','step="0.01"')}${campo('taxa_embalagem_m3','Embalagem R$/m³','number','step="0.01"')}${campo('taxa_item_especial','R$ por item especial','number','step="0.01"')}${campo('validade_orcamento_dias','Validade (dias)','number')}</div></div>
   <div class="card"><h3>Contrato de prestação de serviços</h3>
