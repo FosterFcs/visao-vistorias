@@ -8,7 +8,10 @@
 <meta name="theme-color" content="#0B3B24">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-maskable-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Visão Mudanças">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet">
@@ -249,7 +252,7 @@ a.item:hover .t{color:var(--verde)}
 <div id="raiz"></div>
 <div id="print"></div>
 <script>
-const MARCA = {"id": "visao", "idb": "visao-vistorias", "ls": "vm_", "app": "Visão Mudanças Vistorias", "nome": "Visão", "sub": "Mudanças", "empresa": "Visão Mudanças", "curto": "Visão Mudanças", "logo": "<svg viewBox=\"0 0 100 100\" aria-hidden=\"true\"><rect x=\"2\" y=\"2\" width=\"96\" height=\"96\" rx=\"24\" fill=\"#16A34A\"/><path d=\"M12 50 Q50 14 88 50 Q50 86 12 50 Z\" fill=\"#fff\"/><circle cx=\"50\" cy=\"50\" r=\"19\" fill=\"#0B3B24\"/><rect x=\"41\" y=\"41\" width=\"18\" height=\"18\" rx=\"2.5\" fill=\"#F59E0B\"/><path d=\"M41 47h18M50 41v6\" stroke=\"#0B3B24\" stroke-width=\"2.4\"/></svg>", "cores": {"verde": "#16A34A", "verdeClaro": "#E3F5E9", "oliva": "#D97706", "olivaEsc": "#B45309", "olivaClaro": "#FEF3C7", "escuro": "#0B3B24", "destaque": "#FCD34D"}, "contato": {"fone": "(19) 98274-6877", "email": "contato@visaomudancas.com.br", "site": "www.visaomudancas.com.br", "endereco": "Campinas — SP"}, "repo": "visao-vistorias", "proposta": true, "prefixo": "VM", "demo": {"m1": {"origem_endereco": "Rua Barão de Jaguara, 1200, ap. 81 — Centro, Campinas", "origem_detalhes": "8º andar, elevador de serviço, mudança permitida 8h–17h", "destino_endereco": "Rua das Orquídeas, 45, casa 7 — Barão Geraldo, Campinas", "destino_detalhes": "Condomínio fechado, cadastro prévio na portaria", "distancia_km": 12}, "m2": {"origem_endereco": "Av. José de Souza Campos, 900, sala 1203 — Cambuí, Campinas", "origem_detalhes": "12º andar, doca agendada 7h–12h", "destino_endereco": "Av. Orosimbo Maia, 2100, 3º andar — Vila Itapura, Campinas", "destino_detalhes": "Elevador de carga liberado após 13h", "distancia_km": 4}, "m3": {"origem_endereco": "Rua Dom Pedro II, 300 — Valinhos", "destino_endereco": "Av. Brasil, 1500 — Jardim Guanabara, Campinas", "distancia_km": 15}, "m4": {"tipo": "residencial", "origem_endereco": "Rua Sampainho, 77 — Cambuí, Campinas", "destino_endereco": "Av. Boa Viagem, 3400, ap. 1502 — Recife, PE", "destino_detalhes": "Mudança interestadual, cerca de 5 dias de trânsito; prédio com elevador de serviço", "distancia_km": 2650, "valor_orcado": 18900, "valor_aprovado": 18900, "seguro_valor_declarado": 90000}}};
+const MARCA = {"id": "visao", "idb": "visao-vistorias", "ls": "vm_", "app": "Visão Mudanças Vistorias", "nome": "Visão", "sub": "Mudanças", "empresa": "Visão Mudanças", "curto": "Visão Mudanças", "logo": "<svg viewBox=\"0 0 100 100\" aria-hidden=\"true\"><rect x=\"2\" y=\"2\" width=\"96\" height=\"96\" rx=\"24\" fill=\"#16A34A\"/><path d=\"M12 50 Q50 14 88 50 Q50 86 12 50 Z\" fill=\"#fff\"/><circle cx=\"50\" cy=\"50\" r=\"19\" fill=\"#0B3B24\"/><rect x=\"41\" y=\"41\" width=\"18\" height=\"18\" rx=\"2.5\" fill=\"#F59E0B\"/><path d=\"M41 47h18M50 41v6\" stroke=\"#0B3B24\" stroke-width=\"2.4\"/></svg>", "cores": {"verde": "#16A34A", "verdeClaro": "#E3F5E9", "oliva": "#D97706", "olivaEsc": "#B45309", "olivaClaro": "#FEF3C7", "escuro": "#0B3B24", "destaque": "#FCD34D"}, "contato": {"fone": "(19) 98274-6877", "email": "contato@visaomudancas.com.br", "site": "www.visaomudancas.com.br", "endereco": "Campinas — SP"}, "repo": "visao-vistorias", "proposta": true, "prefixo": "VM", "demo": {"m1": {"origem_endereco": "Rua Barão de Jaguara, 1200, ap. 81 — Centro, Campinas", "origem_detalhes": "8º andar, elevador de serviço, mudança permitida 8h–17h", "destino_endereco": "Rua das Orquídeas, 45, casa 7 — Barão Geraldo, Campinas", "destino_detalhes": "Condomínio fechado, cadastro prévio na portaria", "distancia_km": 12}, "m2": {"origem_endereco": "Av. José de Souza Campos, 900, sala 1203 — Cambuí, Campinas", "origem_detalhes": "12º andar, doca agendada 7h–12h", "destino_endereco": "Av. Orosimbo Maia, 2100, 3º andar — Vila Itapura, Campinas", "destino_detalhes": "Elevador de carga liberado após 13h", "distancia_km": 4}, "m3": {"origem_endereco": "Rua Dom Pedro II, 300 — Valinhos", "destino_endereco": "Av. Brasil, 1500 — Jardim Guanabara, Campinas", "distancia_km": 15}, "m4": {"tipo": "residencial", "origem_endereco": "Rua Sampainho, 77 — Cambuí, Campinas", "destino_endereco": "Av. Boa Viagem, 3400, ap. 1502 — Recife, PE", "destino_detalhes": "Mudança interestadual, cerca de 5 dias de trânsito; prédio com elevador de serviço", "distancia_km": 2650, "valor_orcado": 18900, "valor_aprovado": 18900, "seguro_valor_declarado": 90000}}, "icone_nome": "Visão"};
 'use strict';
 /* =====================================================================
    Sistema de Vistorias de Mudanças — núcleo (white-label: dados da marca em MARCA)
@@ -966,6 +969,7 @@ async function vInicio(c){
   <div class="cab"><div><h1>${saud}, ${esc((PERFIL.nome||'').split(' ')[0])}</h1><div class="sub">${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}</div></div>
   <a class="btn prim" href="#/mudanca/nova">${ic('mais2')}Nova mudança</a></div>
   ${MODO_DEMO ? `<div class="alerta-box azul small">${ic('nuvem','style="width:18px;flex:none"')}<div>Você está no <b>modo demonstração</b>. Os dados são fictícios e ficam só neste aparelho. Conecte o Supabase em Configurações para usar de verdade.</div></div>` : ''}
+  ${PEDIDO_INSTALAR && !instalado() ? `<div class="alerta-box verde small" style="align-items:center">${ic('caixa','style="width:18px;flex:none"')}<div style="flex:1">Instale o app neste aparelho para abrir direto da tela inicial.</div><button class="btn peq prim" id="binst2">Instalar</button></div>` : ''}
   ${extrav.length ? `<div class="alerta-box verm small">${ic('alerta','style="width:18px;flex:none"')}<div><b>${extrav.length} volume(s) marcados como extraviados.</b> Verifique as ocorrências.</div></div>` : ''}
   ${semVist.length ? `<div class="alerta-box amb small">${ic('alerta','style="width:18px;flex:none"')}<div>${semVist.length} mudança(s) em andamento <b>sem vistoria do imóvel</b>: ${semVist.map(m => `<a href="#/mudanca/${m.id}/vistoria">${esc(m.codigo)}</a>`).join(', ')}</div></div>` : ''}
   <div class="grade g2 g4" style="margin-bottom:14px">
@@ -982,6 +986,7 @@ async function vInicio(c){
     <div class="card"><h3>Agenda — próximos 7 dias</h3><div class="lista">${semana.map(cardMudanca).join('') || '<div class="vazio">Nenhuma mudança agendada.</div>'}</div></div>
     <div class="card"><h3>Ocorrências abertas</h3><div class="lista">${ocAb.slice(0,8).map(o => { const m = pega('mudancas', o.mudanca_id); return `<a class="item" href="#/mudanca/${o.mudanca_id}/ocorrencias"><div class="cresce"><div class="t">${OCOR_TIPO[o.tipo]} · ${esc(m?.codigo||'')}</div><div class="s">${esc(o.descricao)}</div></div><span class="tag ${o.status==='aberta'?'verm':'amb'}">${OCOR_STATUS[o.status]}</span></a>`; }).join('') || '<div class="vazio">Nenhuma ocorrência aberta. 👍</div>'}</div></div>
   </div>`;
+  $('#binst2') && ($('#binst2').onclick = instalarApp);
 }
 
 /* ---------------- lista de mudanças ---------------- */
@@ -2025,8 +2030,10 @@ async function vMais(c){
     ${ehGestor() ? `<a class="item" href="#/relatorios">${ic('grafico','style="width:22px"')}<div class="cresce"><div class="t">Relatórios</div></div></a>` : ''}
     <a class="item" href="#/cadastros">${ic('pessoas','style="width:22px"')}<div class="cresce"><div class="t">Cadastros</div><div class="s">Clientes, caminhões, materiais e equipe</div></div></a>
     ${ehGestor() ? `<a class="item" href="#/config">${ic('engrenagem','style="width:22px"')}<div class="cresce"><div class="t">Configurações</div><div class="s">Empresa, preços, termos, servidor</div></div></a>` : ''}
+    ${!instalado() ? `<a class="item" href="#" id="binst">${ic('caixa','style="width:22px"')}<div class="cresce"><div class="t">Instalar o app neste aparelho</div><div class="s">Ícone próprio na tela inicial, abre em tela cheia</div></div></a>` : ''}
     <a class="item" href="#/sair">${ic('sair','style="width:22px"')}<div class="cresce"><div class="t">Sair</div></div></a>
   </div></div>`;
+  $('#binst') && ($('#binst').onclick = e => { e.preventDefault(); instalarApp(); });
 }
 
 /* ---------------- portal do cliente ---------------- */
@@ -2225,6 +2232,18 @@ async function iniciar(){
   if (SESSAO) aposLogin(); else telaLogin();
 }
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+// Instalação como app (sem o selo do Chrome no ícone)
+let PEDIDO_INSTALAR = null;
+const instalado = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); PEDIDO_INSTALAR = e; if (/#\/(inicio|mais)/.test(location.hash)) render(); });
+window.addEventListener('appinstalled', () => { PEDIDO_INSTALAR = null; toast('App instalado na tela inicial', 'ok'); });
+async function instalarApp(){
+  if (PEDIDO_INSTALAR) { PEDIDO_INSTALAR.prompt(); const r = await PEDIDO_INSTALAR.userChoice; if (r.outcome === 'accepted') PEDIDO_INSTALAR = null; return; }
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  modal('Instalar o app', ios ? `<p>No iPhone, abra no <b>Safari</b>, toque em <b>Compartilhar</b> (quadrado com seta) e depois em <b>Adicionar à Tela de Início</b>.</p>`
+    : `<ol style="padding-left:18px;margin:0"><li>Abra este endereço no <b>Chrome</b>.</li><li>Toque nos <b>três pontinhos ⋮</b> no canto de cima.</li><li>Toque em <b>Instalar app</b>. Se aparecer só "Adicionar à tela inicial", escolha essa opção e depois <b>Instalar</b>.</li></ol>
+       <p class="small muted" style="margin-bottom:0">Se você já tinha um atalho com o símbolo do Chrome, apague esse atalho da tela inicial antes.</p>`);
+}
 window.addEventListener('load', () => iniciar().catch(e => { console.error(e); document.body.insertAdjacentHTML('afterbegin', `<div class="alerta-box verm" style="margin:16px">Erro ao iniciar: ${esc(e.message)}</div>`); }));
 
 </script>

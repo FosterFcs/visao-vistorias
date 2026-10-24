@@ -1,7 +1,7 @@
 // Visão Mudanças Vistorias — service worker (funciona offline no campo)
 const PREFIXO = 'visao-vistorias-v';
-const CACHE = PREFIXO + '1.1.0';
-const BASE = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
+const CACHE = PREFIXO + '1.2.0';
+const BASE = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable-192.png', './icon-maskable-512.png'];
 const CDN = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js',

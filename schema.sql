@@ -89,13 +89,10 @@ create table if not exists public.caminhoes (
   placa         text not null,
   modelo        text,
   capacidade_m3 numeric(6,1),
-  valor_diaria  numeric(10,2),
   ativo         boolean not null default true,
   updated_at    timestamptz not null default now(),
   deleted       boolean not null default false
 );
-
-alter table public.caminhoes add column if not exists valor_diaria numeric(10,2);
 
 create table if not exists public.materiais (
   id         uuid primary key default gen_random_uuid(),
@@ -133,7 +130,6 @@ create table if not exists public.mudancas (
   valor_aprovado   numeric(12,2),
   seguro_valor_declarado numeric(12,2),
   condicoes_pagamento text,
-  composicao       jsonb,
   observacoes      text,
   token_portal     uuid not null default gen_random_uuid(),
   avaliacao_nota   int check (avaliacao_nota between 1 and 5),
@@ -144,7 +140,6 @@ create table if not exists public.mudancas (
   deleted          boolean not null default false
 );
 alter table public.mudancas add column if not exists condicoes_pagamento text;
-alter table public.mudancas add column if not exists composicao jsonb;      -- composição do preço (linhas editáveis)
 create index if not exists idx_mudancas_status on public.mudancas(status);
 create index if not exists idx_mudancas_data   on public.mudancas(data_prevista);
 
@@ -420,23 +415,6 @@ end $$;
 drop policy if exists p_gmov_all on public.guarda_movimentos;
 create policy p_gmov_all on public.guarda_movimentos for all to authenticated
   using (public.eh_interno()) with check (public.eh_interno());
-
--- ---------------------------------------------------------------------
--- Permissões da API (projetos novos do Supabase podem não conceder
--- acesso automático às tabelas; a segurança fina continua no RLS)
--- ---------------------------------------------------------------------
-grant usage on schema public to anon, authenticated;
-grant select, insert, update, delete on all tables in schema public to authenticated;
-grant execute on function public.meu_papel(), public.eh_interno(), public.eh_gestor(), public.pode_mudanca(uuid) to authenticated;
-
--- Garante o perfil de quem se cadastrou antes de este script rodar
--- (o primeiro usuário vira administrador)
-insert into public.perfis (id, nome, papel, ativo)
-select u.id, coalesce(u.raw_user_meta_data->>'nome', split_part(u.email,'@',1)),
-       case when row_number() over (order by u.created_at) = 1 and not exists (select 1 from public.perfis) then 'admin' else 'equipe' end,
-       row_number() over (order by u.created_at) = 1 and not exists (select 1 from public.perfis)
-from auth.users u
-where not exists (select 1 from public.perfis p where p.id = u.id);
 
 -- ---------------------------------------------------------------------
 -- Portal do cliente (acesso por link com token, sem login)
