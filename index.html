@@ -745,7 +745,12 @@ function calcOrcamento(m){
   const m3 = soma(itens, i => i.quantidade * i.m3_unit);
   const especiais = soma(itens.filter(i => i.especial), i => i.quantidade);
   const caixas = soma(itens.filter(i => /^Caixa/i.test(i.item)), i => i.quantidade);
-  const veic = VEICULOS.find(v => v.m3 >= m3 * 1.15) || { nome: `${Math.ceil(m3*1.15/90)}× Carreta baú`, m3: 90 };
+  // sugere primeiro um caminhão da própria frota; se nenhum couber, usa a tabela genérica
+  const frota = lista('caminhoes', c => c.ativo !== false && Number(c.capacidade_m3) > 0).sort((a,b) => a.capacidade_m3 - b.capacidade_m3);
+  const proprio = frota.find(c => c.capacidade_m3 >= m3 * 1.15);
+  const veic = proprio ? { nome: `${proprio.modelo || 'Caminhão'} (${proprio.placa}, ${num(proprio.capacidade_m3,0)} m³)`, m3: proprio.capacidade_m3 }
+    : frota.length && m3 * 1.15 <= soma(frota, c => c.capacidade_m3) ? { nome: `Frota: ${frota.map(c => c.placa).join(' + ')}`, m3: soma(frota, c => c.capacidade_m3) }
+    : VEICULOS.find(v => v.m3 >= m3 * 1.15) || { nome: `${Math.ceil(m3*1.15/90)}× Carreta baú`, m3: 90 };
   const ajud = m3 <= 10 ? 2 : m3 <= 25 ? 3 : m3 <= 40 ? 4 : 4 + Math.ceil((m3-40)/15);
   const km = Number(m.distancia_km || 0);
   const emb = m._embalagem !== false;
