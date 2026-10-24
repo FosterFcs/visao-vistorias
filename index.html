@@ -710,9 +710,22 @@ function lerConteudoQR(txt){
   return null;
 }
 const SCANNER = { ativo: false, inst: null };
+function avisoSemCamera(elId, msg){
+  const el = document.getElementById(elId); if (!el) return;
+  el.innerHTML = `<div style="background:var(--fundo);color:var(--tinta-2);padding:22px 16px;text-align:center;min-height:auto;border-radius:12px">
+    ${ic('camera','style="width:34px;height:34px;color:var(--tinta-3)"')}<div style="font-weight:700;margin:6px 0 4px">${msg}</div>
+    <div class="small">Digite o número do volume no campo abaixo, ou abra o sistema no celular para ler as etiquetas.</div></div>`;
+  el.style.minHeight = 'auto'; el.style.background = 'transparent';
+}
 async function iniciarScanner(elId, aoLer){
   await pararScanner();
-  if (typeof Html5Qrcode === 'undefined') { toast('Leitor de QR indisponível — use o número do volume', 'erro'); return false; }
+  if (typeof Html5Qrcode === 'undefined') { avisoSemCamera(elId, 'Leitor de QR indisponível agora'); return false; }
+  try {
+    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+      const devs = await navigator.mediaDevices.enumerateDevices();
+      if (!devs.some(d => d.kind === 'videoinput')) { avisoSemCamera(elId, 'Este aparelho não tem câmera'); return false; }
+    }
+  } catch(e){}
   try {
     const h = new Html5Qrcode(elId, { verbose: false });
     let ultimo = '', quando = 0;
@@ -722,7 +735,14 @@ async function iniciarScanner(elId, aoLer){
       aoLer(txt);
     });
     SCANNER.ativo = true; SCANNER.inst = h; return true;
-  } catch (e) { toast('Não foi possível abrir a câmera: '+(e.message||e), 'erro'); return false; }
+  } catch (e) {
+    const m = String(e && (e.name || e.message || e));
+    avisoSemCamera(elId, /NotFound|not found|Requested device/i.test(m) ? 'Este aparelho não tem câmera'
+      : /NotAllowed|Permission|denied/i.test(m) ? 'A câmera foi bloqueada — libere no cadeado ao lado do endereço do site'
+      : /NotReadable|in use|Could not start/i.test(m) ? 'A câmera está sendo usada por outro aplicativo'
+      : 'Não foi possível abrir a câmera');
+    return false;
+  }
 }
 async function pararScanner(){
   if (SCANNER.inst) { try { await SCANNER.inst.stop(); SCANNER.inst.clear(); } catch(e){} }
@@ -1550,7 +1570,6 @@ async function abaCarga(el, m){
     if (SCANNER.ativo) { await pararScanner(); $('#leitor').classList.add('hide'); $('#bcam').innerHTML = `${ic('scan')}Ler QR com a câmera`; return; }
     $('#leitor').classList.remove('hide');
     if (await iniciarScanner('leitor', txt => marcar(lerConteudoQR(txt), 'scan'))) $('#bcam').innerHTML = 'Fechar câmera';
-    else $('#leitor').classList.add('hide');
   };
   $('#fnum').onsubmit = e => { e.preventDefault(); const n = Number(form2obj(e.target).n); const v = r.lista.find(x => x.numero === n); e.target.reset(); marcar(v || null, 'num'); };
   $$('[data-mk]', el).forEach(b => b.onclick = () => marcar(pega('volumes', b.dataset.mk), 'lista'));
