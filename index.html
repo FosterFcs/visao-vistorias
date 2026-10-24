@@ -258,7 +258,7 @@ const MARCA = {"id": "visao", "idb": "visao-vistorias", "ls": "vm_", "app": "Vis
 
 // >>> Preencha com os dados do projeto Supabase da empresa (ou configure
 //     pela tela Configurações > Conexão). Vazio = modo demonstração local.
-const CONEXAO_PADRAO = { url: '', key: '' };
+const CONEXAO_PADRAO = MARCA.conexao || { url: '', key: '' };
 
 const VERSAO = '1.1.0';
 const LSK = k => MARCA.ls + k; // chaves locais separadas por empresa (apps no mesmo domínio)
@@ -2085,6 +2085,16 @@ async function aposLogin2(uid){
 }
 async function iniciar(){
   await IDB.abrir();
+  // Dados locais pertencem a uma origem (demonstração ou um servidor). Se a origem mudou
+  // (ex.: o aparelho usou a demonstração e agora está conectado), limpa o que é de outra origem.
+  const conAtual = conexao(); const origemAtual = conAtual ? conAtual.url : 'demo';
+  const origemSalva = await IDB.pega('meta', 'origem');
+  let demoAntigo = false; try { demoAntigo = !!localStorage.getItem(LSK('demo')); } catch(e){}
+  if ((origemSalva && origemSalva !== origemAtual) || (!origemSalva && conAtual && demoAntigo)) {
+    for (const t of [...TABELAS, 'outbox', 'blobs', 'meta']) await IDB.limpa(t);
+    try { localStorage.removeItem(LSK('demo')); } catch(e){}
+  }
+  await IDB.poe('meta', origemAtual, 'origem');
   await carregarLocal();
   await prepararURLsLocais();
   const con = conexao();
