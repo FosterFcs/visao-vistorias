@@ -182,6 +182,12 @@ a.item:hover .t{color:var(--verde)}
 .colunas .c span{font-size:11px;color:var(--tinta-3)}
 .colunas .c b{font-size:12px}
 
+/* ---------- autocompletar ---------- */
+.ac-lista{position:absolute;left:0;right:0;top:calc(100% + 4px);min-width:220px;z-index:70;background:#fff;border:1px solid var(--linha);border-radius:10px;box-shadow:0 10px 26px rgba(16,35,27,.16);max-height:260px;overflow:auto}
+.ac-op{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 12px;border-bottom:1px solid var(--linha-2);cursor:pointer;font-size:14.5px}
+.ac-op:last-child{border-bottom:0}
+.ac-op span{font-size:11.5px;color:var(--tinta-3);white-space:nowrap}
+.ac-op.on,.ac-op:hover{background:var(--verde-claro)}
 /* ---------- modal / toast ---------- */
 .modal-fundo{position:fixed;inset:0;background:rgba(10,25,19,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center}
 @media (min-width:700px){.modal-fundo{align-items:center}}
@@ -322,11 +328,11 @@ const VEICULOS = [
 ];
 // Catálogo de móveis por ambiente: [nome, m³ por unidade, especial?]
 const CATALOGO = {
-  'Sala':[['Sofá 2 lugares',1.2],['Sofá 3 lugares',1.8],['Sofá retrátil/canto',2.5],['Poltrona',0.6],['Rack/painel TV',0.8],['TV até 50"',0.25],['TV acima de 50"',0.4],['Home theater/caixas de som',0.15],['Mesa de centro',0.3],['Mesa lateral',0.15],['Estante',1.0],['Mesa de jantar 4 lug.',0.8],['Mesa de jantar 6+ lug.',1.2],['Cadeira',0.2],['Buffet/aparador',0.9],['Cristaleira',0.9],['Tapete',0.2],['Luminária de chão',0.15],['Cortinas/persianas',0.1]],
-  'Quarto':[['Cama solteiro',0.7],['Cama casal',1.2],['Cama queen/king',1.5],['Bicama/treliche',1.0],['Colchão solteiro',0.4],['Colchão casal',0.6],['Colchão queen/king',0.8],['Guarda-roupa 2-3 portas',1.2],['Guarda-roupa 4-6 portas',2.2],['Cômoda',0.6],['Criado-mudo',0.15],['Penteadeira',0.5],['Sapateira',0.4],['Berço',0.5],['Escrivaninha',0.5],['Cadeira',0.2],['TV até 50"',0.25],['Ar-condicionado',0.2],['Espelho de chão',0.15]],
-  'Cozinha':[['Geladeira',1.0],['Geladeira duplex/side',1.5],['Freezer',0.8],['Fogão',0.5],['Cooktop',0.1],['Forno elétrico',0.15],['Micro-ondas',0.1],['Lava-louças',0.4],['Armário de cozinha (módulo)',0.5],['Paneleiro',0.6],['Mesa de cozinha',0.5],['Cadeira',0.2],['Banqueta',0.15],['Adega',0.3],['Purificador/filtro',0.05]],
+  'Sala':[['Sofá 2 lugares',1.2],['Sofá 3 lugares',1.8],['Sofá retrátil/canto',2.5],['Poltrona',0.6],['Rack/painel TV',0.8],['TV até 50"',0.25],['TV acima de 50"',0.4],['Home theater/caixas de som',0.15],['Mesa de centro',0.3],['Mesa lateral',0.15],['Estante',1.0],['Mesa de jantar 4 lug.',0.8],['Mesa de jantar 6+ lug.',1.2],['Cadeira',0.2],['Buffet/aparador',0.9],['Cristaleira',0.9],['Tapete',0.2],['Luminária de chão',0.15],['Cortinas/persianas',0.1],['Puff',0.15],['Banco',0.3],['Baú',0.4],['Painel de TV',0.5],['Adega climatizada',0.3],['Ventilador',0.1],['Ar-condicionado portátil',0.2],['Cadeira giratória',0.3]],
+  'Quarto':[['Cama solteiro',0.7],['Cama casal',1.2],['Cama queen/king',1.5],['Bicama/treliche',1.0],['Colchão solteiro',0.4],['Colchão casal',0.6],['Colchão queen/king',0.8],['Guarda-roupa 2-3 portas',1.2],['Guarda-roupa 4-6 portas',2.2],['Cômoda',0.6],['Criado-mudo',0.15],['Penteadeira',0.5],['Sapateira',0.4],['Berço',0.5],['Escrivaninha',0.5],['Cadeira',0.2],['TV até 50"',0.25],['Ar-condicionado',0.2],['Espelho de chão',0.15],['Cabeceira',0.3],['Baú',0.4],['Armário',1.0],['Estante',1.0],['Poltrona',0.6],['Cômoda infantil',0.5],['Trocador',0.3],['Ventilador',0.1],['Cadeira giratória',0.3]],
+  'Cozinha':[['Geladeira',1.0],['Geladeira duplex/side',1.5],['Freezer',0.8],['Fogão',0.5],['Cooktop',0.1],['Forno elétrico',0.15],['Micro-ondas',0.1],['Lava-louças',0.4],['Armário de cozinha (módulo)',0.5],['Paneleiro',0.6],['Mesa de cozinha',0.5],['Cadeira',0.2],['Banqueta',0.15],['Adega',0.3],['Purificador/filtro',0.05],['Bebedouro',0.15],['Armário aéreo',0.3],['Carrinho de chá',0.2],['Fritadeira/air fryer',0.05],['Liquidificador/batedeira',0.05]],
   'Banheiro':[['Gabinete/armário',0.3],['Espelheira',0.1],['Cesto de roupa',0.1],['Balança',0.03],['Box/acessórios',0.1]],
-  'Escritório':[['Mesa de escritório',0.7],['Mesa em L',1.0],['Cadeira de escritório',0.3],['Arquivo/gaveteiro',0.5],['Estante de livros',1.0],['Computador + monitor',0.1],['Impressora',0.1],['Cofre',0.3,1]],
+  'Escritório':[['Mesa de escritório',0.7],['Mesa em L',1.0],['Cadeira de escritório',0.3],['Arquivo/gaveteiro',0.5],['Estante de livros',1.0],['Computador + monitor',0.1],['Impressora',0.1],['Cofre',0.3,1],['Cadeira giratória',0.3],['Armário de aço',0.8],['Mesa de reunião',1.2],['Quadro branco',0.1]],
   'Área de serviço':[['Máquina de lavar',0.6],['Secadora',0.5],['Tanquinho',0.4],['Armário de lavanderia',0.6],['Tábua de passar',0.1],['Varal de chão',0.1],['Aspirador',0.05]],
   'Varanda':[['Mesa externa',0.6],['Cadeira externa',0.2],['Espreguiçadeira',0.6],['Rede/suporte',0.15],['Churrasqueira',0.4],['Vaso/planta',0.15],['Floreira',0.1]],
   'Garagem':[['Bicicleta',0.4],['Prateleira de aço',0.6],['Caixa de ferramentas',0.1],['Pneus (jogo)',0.4],['Cortador de grama',0.3],['Escada',0.2],['Moto',2.0,1]],
@@ -472,6 +478,57 @@ function confirmar(msg, ok='Confirmar'){
     });
     m.addEventListener('fechou', () => res(r));
   });
+}
+
+/* ---------------- autocompletar (digite as primeiras letras) ---------------- */
+const semAcento = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+function autocompletar(input, fonte, aoEscolher){
+  const caixa = document.createElement('div');
+  caixa.style.cssText = 'position:relative;min-width:0';
+  input.parentNode.insertBefore(caixa, input); caixa.appendChild(input);
+  const lst = document.createElement('div');
+  lst.className = 'ac-lista hide'; caixa.appendChild(lst);
+  let opcoes = [], sel = -1;
+  const fechar = () => { lst.classList.add('hide'); sel = -1; };
+  const mostrar = () => {
+    const q = semAcento(input.value.trim());
+    if (!q) return fechar();
+    const todas = fonte(); const vistos = new Set(); const inicio = [], palavra = [], contem = [];
+    for (const o of todas) { const k = semAcento(o.nome); if (vistos.has(k)) continue; vistos.add(k);
+      if (k.startsWith(q)) inicio.push(o); else if (k.split(/[\s/(-]+/).some(p => p.startsWith(q))) palavra.push(o); else if (q.length >= 3 && k.includes(q)) contem.push(o); }
+    opcoes = inicio.concat(palavra, inicio.length + palavra.length < 4 ? contem : []).slice(0, 10);
+    if (!opcoes.length || (opcoes.length === 1 && opcoes[0].nome === input.value.trim())) return fechar();
+    lst.innerHTML = opcoes.map((o, i) => `<div class="ac-op" data-i="${i}"><b>${esc(o.nome)}</b>${o.grupo ? `<span>${esc(o.grupo)}</span>` : ''}</div>`).join('');
+    lst.classList.remove('hide'); sel = -1;
+  };
+  const escolher = i => { const o = opcoes[i]; if (!o) return; input.value = o.nome; fechar(); aoEscolher && aoEscolher(o); };
+  input.setAttribute('autocomplete', 'off');
+  input.addEventListener('input', mostrar);
+  input.addEventListener('focus', () => { if (input.value.trim()) mostrar(); });
+  input.addEventListener('keydown', e => {
+    if (lst.classList.contains('hide')) return;
+    const ops = $$('.ac-op', lst);
+    if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(ops.length - 1, sel + 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); }
+    else if (e.key === 'Enter' && sel >= 0) { e.preventDefault(); return escolher(sel); }
+    else if (e.key === 'Escape') return fechar();
+    ops.forEach((o, i) => o.classList.toggle('on', i === sel));
+  });
+  lst.addEventListener('pointerdown', e => { const op = e.target.closest('.ac-op'); if (op) { e.preventDefault(); escolher(Number(op.dataset.i)); } });
+  input.addEventListener('blur', () => setTimeout(fechar, 150));
+}
+// lista completa para descrever um volume: ambiente atual primeiro, depois todo o catálogo, caixas e o que já foi usado
+function fonteItensVolume(comodo, acond, mudanca_id){
+  const amb = ambienteDe(comodo); const L = [];
+  const add = (nome, grupo, extra) => L.push(Object.assign({ nome, grupo }, extra || {}));
+  if (acond === 'cx') CONTEUDOS_CAIXA.forEach(n => add(n, 'conteúdo de caixa', { cx: true }));
+  lista('orcamento_itens', i => i.mudanca_id === mudanca_id && i.comodo === comodo).forEach(i => add(i.item, 'do orçamento'));
+  if (amb) CATALOGO[amb].forEach(([n]) => add(n, amb, { grupo2: amb }));
+  Object.entries(CATALOGO).forEach(([g, its]) => { if (g !== amb) its.forEach(([n]) => add(n, g, { grupo2: g })); });
+  if (acond !== 'cx') CONTEUDOS_CAIXA.forEach(n => add(n, 'conteúdo de caixa', { cx: true }));
+  itensExtras(amb || comodo).forEach(([n]) => add(n, 'usado antes'));
+  lista('volumes', v => v.descricao).slice(-300).forEach(v => add(v.descricao, 'usado antes', { cx: acondDe(v) === 'cx' }));
+  return L;
 }
 
 /* ---------------- IndexedDB ---------------- */
@@ -1296,6 +1353,8 @@ async function abaOrcamento(el, m){
   $$('#ocom [data-c], tr[data-c]', el).forEach(c => c.onclick = () => { COMODO_ORC = c.dataset.c; GRUPO_EXTRA = ''; render(); });
   $('#ocom [data-novo]').onclick = () => { const n = prompt('Nome do ambiente (ex.: Quarto 4, Edícula, Sala de TV)'); if (n && n.trim()) { COMODO_ORC = n.trim(); GRUPO_EXTRA = ''; render(); } };
   $$('[data-g]', el).forEach(c => c.onclick = () => { GRUPO_EXTRA = GRUPO_EXTRA === c.dataset.g ? '' : c.dataset.g; render(); });
+  autocompletar($('#olivre [name=item]'), () => fonteItensVolume(COMODO_ORC, 'emb', m.id).filter(o => !o.cx), o => {
+    const f = Object.values(CATALOGO).flat().find(x => x[0] === o.nome); if (f) { $('#olivre [name=m3]').value = f[1]; $('#olivre [name=esp]').checked = !!f[2]; } });
   $('#olivre').onsubmit = async e => { e.preventDefault(); const d = form2obj(e.target);
     const v = numOuNulo(d.m3); await alterar(d.item, v === null ? 0.3 : v, !!d.esp, Math.max(1, Number(d.q)||1)); toast(`${d.item} incluído em ${COMODO_ORC}`, 'ok'); };
   $('#ovalor') && ($('#ovalor').onsubmit = async e => { e.preventDefault(); const d = form2obj(e.target); await salvar('mudancas', { id: m.id, valor_orcado: numOuNulo(d.v), condicoes_pagamento: nulo(d.cp) }); toast('Salvo', 'ok'); render(); });
@@ -1425,7 +1484,7 @@ function modalVolume(m, v){
     <label class="campo"><span>Cômodo de destino</span><select name="comodo_destino">${opCom(v.comodo_destino)}</select></label></div>
     <span class="small" style="font-weight:600;color:var(--tinta-2)" id="vsugt">Escolha da lista</span>
     <div id="vsug" style="margin:6px 0 10px;max-height:170px;overflow:auto"></div>
-    <label class="campo"><span>Descrição / conteúdo — ou digite se não estiver na lista</span><input name="descricao" value="${esc(v.descricao||'')}" placeholder="Ex.: Sofá 3 lugares cinza / Louças da cozinha"></label>
+    <label class="campo"><span>Descrição — digite as primeiras letras para buscar na lista completa</span><input name="descricao" value="${esc(v.descricao||'')}" placeholder="Ex.: cad → Cadeira giratória · liv → Livros"></label>
     <label class="campo"><span>Embalado por</span><input name="embalado_por" list="dl-emb" value="${esc(v.embalado_por || (novo ? (ultimo?.embalado_por || '') : ''))}" placeholder="Nome de quem embalou"></label>
     <datalist id="dl-emb">${nomesEquipe(m).map(n => `<option value="${esc(n)}">`).join('')}</datalist>
     ${ehGestor() || novo ? `<label class="campo"><span>Valor declarado (R$, opcional)</span><input type="number" step="0.01" name="valor_declarado" value="${esc(v.valor_declarado??'')}"></label>` : ''}
@@ -1467,6 +1526,10 @@ function modalVolume(m, v){
         inp.value = n; inp.focus(); const grupo = Object.keys(CATALOGO).find(g => CATALOGO[g].some(x => x[0] === n));
         const t = tipoSugerido(n, grupo); marcaTipo(t); marcaAcond(t === 'caixa' ? 'cx' : 'emb'); if (t === 'caixa') desSug(); });
     };
+    autocompletar($('[name=descricao]', c), () => fonteItensVolume($('[name=comodo_origem]', c).value, acond, m.id), o => {
+      if (o.cx) { marcaAcond('cx'); if (!['caixa','fragil'].includes(tipo)) marcaTipo(/Louças|Copos|Quadros/.test(o.nome) ? 'fragil' : 'caixa'); }
+      else if (o.grupo2) { const t = tipoSugerido(o.nome, o.grupo2); marcaTipo(t); marcaAcond(t === 'caixa' ? 'cx' : 'emb'); }
+      desSug(); });
     $('[name=comodo_origem]', c).addEventListener('change', e => { const d = $('[name=comodo_destino]', c); if (d && !pega('volumes', v.id)) d.value = e.target.value; desSug(); });
     desSug();
     const desAv = () => { $('#vav', c).innerHTML = avarias.length ? `<div class="chips">${avarias.map((a,i) => `<span class="chip on" data-rav="${i}"><b>${esc(codAvaria(a))}</b>&nbsp;${esc(textoAvaria(a).replace(/^\S+ /,''))} ✕</span>`).join('')}</div>` : '<span class="small muted">Nenhuma — item em bom estado</span>';
