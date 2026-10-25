@@ -258,7 +258,7 @@ a.item:hover .t{color:var(--verde)}
 <div id="raiz"></div>
 <div id="print"></div>
 <script>
-const MARCA = {"id": "visao", "idb": "visao-vistorias", "ls": "vm_", "app": "Visão Mudanças Vistorias", "nome": "Visão", "sub": "Mudanças", "empresa": "Visão Mudanças", "curto": "Visão Mudanças", "logo": "<svg viewBox=\"0 0 100 100\" aria-hidden=\"true\"><rect x=\"2\" y=\"2\" width=\"96\" height=\"96\" rx=\"24\" fill=\"#16A34A\"/><path d=\"M12 50 Q50 14 88 50 Q50 86 12 50 Z\" fill=\"#fff\"/><circle cx=\"50\" cy=\"50\" r=\"19\" fill=\"#0B3B24\"/><rect x=\"41\" y=\"41\" width=\"18\" height=\"18\" rx=\"2.5\" fill=\"#F59E0B\"/><path d=\"M41 47h18M50 41v6\" stroke=\"#0B3B24\" stroke-width=\"2.4\"/></svg>", "cores": {"verde": "#16A34A", "verdeClaro": "#E3F5E9", "oliva": "#D97706", "olivaEsc": "#B45309", "olivaClaro": "#FEF3C7", "escuro": "#0B3B24", "destaque": "#FCD34D"}, "contato": {"fone": "(19) 98274-6877", "email": "contato@visaomudancas.com.br", "site": "www.visaomudancas.com.br", "endereco": "Campinas — SP"}, "repo": "visao-vistorias", "proposta": true, "prefixo": "VM", "demo": {"m1": {"origem_endereco": "Rua Barão de Jaguara, 1200, ap. 81 — Centro, Campinas", "origem_detalhes": "8º andar, elevador de serviço, mudança permitida 8h–17h", "destino_endereco": "Rua das Orquídeas, 45, casa 7 — Barão Geraldo, Campinas", "destino_detalhes": "Condomínio fechado, cadastro prévio na portaria", "distancia_km": 12}, "m2": {"origem_endereco": "Av. José de Souza Campos, 900, sala 1203 — Cambuí, Campinas", "origem_detalhes": "12º andar, doca agendada 7h–12h", "destino_endereco": "Av. Orosimbo Maia, 2100, 3º andar — Vila Itapura, Campinas", "destino_detalhes": "Elevador de carga liberado após 13h", "distancia_km": 4}, "m3": {"origem_endereco": "Rua Dom Pedro II, 300 — Valinhos", "destino_endereco": "Av. Brasil, 1500 — Jardim Guanabara, Campinas", "distancia_km": 15}, "m4": {"tipo": "residencial", "origem_endereco": "Rua Sampainho, 77 — Cambuí, Campinas", "destino_endereco": "Av. Boa Viagem, 3400, ap. 1502 — Recife, PE", "destino_detalhes": "Mudança interestadual, cerca de 5 dias de trânsito; prédio com elevador de serviço", "distancia_km": 2650, "valor_orcado": 18900, "valor_aprovado": 18900, "seguro_valor_declarado": 90000}}, "icone_nome": "Visão"};
+const MARCA = {"id": "visao", "idb": "visao-vistorias", "ls": "vm_", "app": "Visão Mudanças Vistorias", "nome": "Visão", "sub": "Mudanças", "empresa": "Visão Mudanças", "curto": "Visão Mudanças", "logo": "<svg viewBox=\"0 0 100 100\" aria-hidden=\"true\"><rect x=\"2\" y=\"2\" width=\"96\" height=\"96\" rx=\"24\" fill=\"#16A34A\"/><path d=\"M12 50 Q50 14 88 50 Q50 86 12 50 Z\" fill=\"#fff\"/><circle cx=\"50\" cy=\"50\" r=\"19\" fill=\"#0B3B24\"/><rect x=\"41\" y=\"41\" width=\"18\" height=\"18\" rx=\"2.5\" fill=\"#F59E0B\"/><path d=\"M41 47h18M50 41v6\" stroke=\"#0B3B24\" stroke-width=\"2.4\"/></svg>", "cores": {"verde": "#16A34A", "verdeClaro": "#E3F5E9", "oliva": "#D97706", "olivaEsc": "#B45309", "olivaClaro": "#FEF3C7", "escuro": "#0B3B24", "destaque": "#FCD34D"}, "contato": {"fone": "(19) 98274-6877", "email": "contato@visaomudancas.com.br", "site": "www.visaomudancas.com.br", "endereco": "Campinas — SP", "whatsapp_admin": "(19) 98274-6877"}, "repo": "visao-vistorias", "proposta": true, "prefixo": "VM", "demo": {"m1": {"origem_endereco": "Rua Barão de Jaguara, 1200, ap. 81 — Centro, Campinas", "origem_detalhes": "8º andar, elevador de serviço, mudança permitida 8h–17h", "destino_endereco": "Rua das Orquídeas, 45, casa 7 — Barão Geraldo, Campinas", "destino_detalhes": "Condomínio fechado, cadastro prévio na portaria", "distancia_km": 12}, "m2": {"origem_endereco": "Av. José de Souza Campos, 900, sala 1203 — Cambuí, Campinas", "origem_detalhes": "12º andar, doca agendada 7h–12h", "destino_endereco": "Av. Orosimbo Maia, 2100, 3º andar — Vila Itapura, Campinas", "destino_detalhes": "Elevador de carga liberado após 13h", "distancia_km": 4}, "m3": {"origem_endereco": "Rua Dom Pedro II, 300 — Valinhos", "destino_endereco": "Av. Brasil, 1500 — Jardim Guanabara, Campinas", "distancia_km": 15}, "m4": {"tipo": "residencial", "origem_endereco": "Rua Sampainho, 77 — Cambuí, Campinas", "destino_endereco": "Av. Boa Viagem, 3400, ap. 1502 — Recife, PE", "destino_detalhes": "Mudança interestadual, cerca de 5 dias de trânsito; prédio com elevador de serviço", "distancia_km": 2650, "valor_orcado": 18900, "valor_aprovado": 18900, "seguro_valor_declarado": 90000}}, "icone_nome": "Visão"};
 'use strict';
 /* =====================================================================
    Sistema de Vistorias de Mudanças — núcleo (white-label: dados da marca em MARCA)
@@ -673,6 +673,7 @@ async function sincronizar(manual){
       await IDB.poe('meta', maior, 'pull:'+t);
     }
     if (SESSAO) { const p = pega('perfis', SESSAO.user.id); if (p) PERFIL = p; }
+    avisarPendentes();
     SYNC.ultimo = new Date();
     if (manual) toast('Sincronizado', 'ok');
   } catch (e) {
@@ -692,6 +693,35 @@ function atualizaSyncUI(){
 window.addEventListener('online', () => { atualizaSyncUI(); agendarSync(300); });
 window.addEventListener('offline', atualizaSyncUI);
 setInterval(() => { if (!MODO_DEMO && SESSAO) sincronizar(); }, 60000);
+// ao voltar para o app, sincroniza na hora (o administrador vê logo quem pediu acesso)
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !MODO_DEMO && SESSAO) sincronizar(); });
+
+/* ---------------- novos usuários aguardando liberação ---------------- */
+const pendentesAcesso = () => lista('perfis', p => !p.ativo);
+function avisarPendentes(){
+  if (!PERFIL || PERFIL.papel !== 'admin') return;
+  let vistos = []; try { vistos = JSON.parse(localStorage.getItem(LSK('pend_vistos')) || '[]'); } catch(e){}
+  const novos = pendentesAcesso().filter(p => !vistos.includes(p.id));
+  if (!novos.length) return;
+  const txt = novos.length === 1 ? `${novos[0].nome} pediu acesso ao sistema` : `${novos.length} pessoas pediram acesso ao sistema`;
+  toast(txt + ' — libere em Cadastros › Equipe');
+  if (navigator.vibrate) navigator.vibrate([80, 60, 80]);
+  try {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const op = { body: 'Toque para liberar o acesso.', icon: 'icon-192.png', badge: 'icon-192.png', tag: 'pendentes', data: { url: location.pathname + '#/cadastros/equipe' } };
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.ready.then(r => r.showNotification(txt, op));
+      else new Notification(txt, op);
+    }
+  } catch(e){}
+  try { localStorage.setItem(LSK('pend_vistos'), JSON.stringify(vistos.concat(novos.map(p => p.id)).slice(-200))); } catch(e){}
+  if (/#\/(inicio|cadastros)/.test(location.hash) && !MODAL_ABERTO) render();
+}
+async function ativarAvisos(){
+  if (!('Notification' in window)) return toast('Este navegador não permite notificações', 'erro');
+  const r = await Notification.requestPermission();
+  toast(r === 'granted' ? 'Avisos ativados neste aparelho' : 'Avisos não autorizados', r === 'granted' ? 'ok' : 'erro');
+  render();
+}
 
 /* ---------------- fotos ---------------- */
 async function comprimirFoto(arquivo, carimbo){
@@ -933,12 +963,14 @@ function moldura(){
 function desenharNav(hash){
   const at = h => hash.startsWith(h) || (h==='#/mudancas' && hash.startsWith('#/mudanca'));
   const itens = NAV.filter(n => ehGestor() || !['#/relatorios','#/config'].includes(n[0]));
-  $('#lateral').innerHTML = itens.map((n,i) => `${i===3?'<div class="grupo">Gestão</div>':''}<a href="${n[0]}" class="${at(n[0])?'ativo':''}">${ic(n[2])}${n[1]}</a>`).join('')
+  const np = ehAdmin() ? pendentesAcesso().length : 0;
+  const selo = k => k === '#/cadastros' && np ? ` <span class="tag verm" style="padding:1px 7px;margin-left:auto">${np}</span>` : '';
+  $('#lateral').innerHTML = itens.map((n,i) => `${i===3?'<div class="grupo">Gestão</div>':''}<a href="${n[0]}" class="${at(n[0])?'ativo':''}">${ic(n[2])}${n[1]}${selo(n[0])}</a>`).join('')
     + `<div class="grupo">${esc(PERFIL?.nome||'')}</div><a href="#/sair">${ic('sair')}Sair</a>`;
   const baixo = [NAV[0],NAV[1],NAV[2],NAV[3],['#/mais','Mais','mais']];
   $('#navbaixo').innerHTML = baixo.map(n => n[0]==='#/escanear'
     ? `<a href="${n[0]}" class="scan"><span class="bola">${ic('scan')}</span></a>`
-    : `<a href="${n[0]}" class="${at(n[0]) || (n[0]==='#/mais' && /#\/(relatorios|cadastros|config|mais)/.test(hash))?'ativo':''}">${ic(n[2])}<span>${n[0]==='#/guarda'?'Guarda':n[1]}</span></a>`).join('');
+    : `<a href="${n[0]}" style="position:relative" class="${at(n[0]) || (n[0]==='#/mais' && /#\/(relatorios|cadastros|config|mais)/.test(hash))?'ativo':''}">${ic(n[2])}<span>${n[0]==='#/guarda'?'Guarda':n[1]}</span>${n[0]==='#/mais' && np ? `<i style="position:absolute;top:2px;right:28%;width:9px;height:9px;border-radius:50%;background:var(--vermelho)"></i>` : ''}</a>`).join('');
 }
 function rodapeDev(){ return `<footer class="rodape-dev">${rodapeDevHTML(false)}</footer>`; }
 
@@ -971,7 +1003,7 @@ function telaLogin(msg){
   const tem = !!conexao();
   $('#raiz').innerHTML = `<div class="tela-cheia"><div class="caixa">
     <div class="logo-grande">${LOGO}<div><b>${esc(MARCA.nome)}</b><span>${esc(MARCA.sub)} · Vistorias</span></div></div>
-    ${msg ? `<div class="alerta-box amb small">${esc(msg)}</div>` : ''}
+    ${msg ? `<div class="alerta-box amb small" style="display:block">${esc(msg)}${/aguarda libera/.test(msg) && MARCA.contato.whatsapp_admin ? `<div style="margin-top:10px"><a class="btn prim peq" target="_blank" rel="noopener" href="https://wa.me/55${MARCA.contato.whatsapp_admin.replace(/\D/g,'')}?text=${encodeURIComponent('Olá! Criei minha conta no sistema de vistorias da ' + MARCA.curto + ' (' + (SESSAO?.user?.email || '') + '). Pode liberar meu acesso?')}">${ic('whats')}Avisar o administrador</a> <button type="button" class="btn peq" id="bverif">Já fui liberado</button></div>` : ''}</div>` : ''}
     ${MARCA.proposta ? `<div class="alerta-box azul small" style="display:block">Demonstração preparada pela <b>${DEV.marca}</b> para a ${esc(MARCA.empresa)}. Dados fictícios.</div>` : ''}
     ${tem ? `<form id="flogin">
       <label class="campo"><span>E-mail</span><input type="email" name="email" required autocomplete="username"></label>
@@ -983,6 +1015,8 @@ function telaLogin(msg){
     <div style="margin-top:14px;text-align:center"><a href="#" id="lcon" class="small muted">${tem?'Alterar conexão do servidor':'Conectar ao servidor'}</a></div>
   </div><footer class="rodape-dev">${rodapeDevHTML(false)}</footer></div>`;
   $('#lcon').onclick = e => { e.preventDefault(); modalConexao(); };
+  $('#bverif') && ($('#bverif').onclick = async () => { if (!SB || !SESSAO) return; const { data } = await SB.from('perfis').select('*').eq('id', SESSAO.user.id).maybeSingle();
+    if (data && data.ativo) { S.perfis.set(data.id, data); await IDB.poe('perfis', data); aposLogin(); } else toast('Ainda aguardando liberação', 'erro'); });
   if (!tem) { $('#bdemo').onclick = entrarDemo; return; }
   $('#flogin').onsubmit = async e => {
     e.preventDefault(); const d = form2obj(e.target);
@@ -1048,6 +1082,8 @@ async function vInicio(c){
   <a class="btn prim" href="#/mudanca/nova">${ic('mais2')}Nova mudança</a></div>
   ${MODO_DEMO ? `<div class="alerta-box azul small">${ic('nuvem','style="width:18px;flex:none"')}<div>Você está no <b>modo demonstração</b>. Os dados são fictícios e ficam só neste aparelho. Conecte o Supabase em Configurações para usar de verdade.</div></div>` : ''}
   ${PEDIDO_INSTALAR && !instalado() ? `<div class="alerta-box verde small" style="align-items:center">${ic('caixa','style="width:18px;flex:none"')}<div style="flex:1">Instale o app neste aparelho para abrir direto da tela inicial.</div><button class="btn peq prim" id="binst2">Instalar</button></div>` : ''}
+  ${ehAdmin() && pendentesAcesso().length ? `<div class="alerta-box amb small" style="display:block"><b>${pendentesAcesso().length} pessoa(s) aguardando liberação de acesso</b>
+    <div class="lista" style="margin-top:6px">${pendentesAcesso().map(pp => `<div class="item" style="padding:6px 0;border-color:rgba(0,0,0,.08)"><div class="cresce"><div class="t">${esc(pp.nome)}</div><div class="s">criou a conta e espera você liberar</div></div><button class="btn peq prim" data-lib="${pp.id}">Liberar</button></div>`).join('')}</div></div>` : ''}
   ${extrav.length ? `<div class="alerta-box verm small">${ic('alerta','style="width:18px;flex:none"')}<div><b>${extrav.length} volume(s) marcados como extraviados.</b> Verifique as ocorrências.</div></div>` : ''}
   ${semVist.length ? `<div class="alerta-box amb small">${ic('alerta','style="width:18px;flex:none"')}<div>${semVist.length} mudança(s) em andamento <b>sem vistoria do imóvel</b>: ${semVist.map(m => `<a href="#/mudanca/${m.id}/vistoria">${esc(m.codigo)}</a>`).join(', ')}</div></div>` : ''}
   <div class="grade g2 g4" style="margin-bottom:14px">
@@ -1065,6 +1101,7 @@ async function vInicio(c){
     <div class="card"><h3>Ocorrências abertas</h3><div class="lista">${ocAb.slice(0,8).map(o => { const m = pega('mudancas', o.mudanca_id); return `<a class="item" href="#/mudanca/${o.mudanca_id}/ocorrencias"><div class="cresce"><div class="t">${OCOR_TIPO[o.tipo]} · ${esc(m?.codigo||'')}</div><div class="s">${esc(o.descricao)}</div></div><span class="tag ${o.status==='aberta'?'verm':'amb'}">${OCOR_STATUS[o.status]}</span></a>`; }).join('') || '<div class="vazio">Nenhuma ocorrência aberta. 👍</div>'}</div></div>
   </div>`;
   $('#binst2') && ($('#binst2').onclick = instalarApp);
+  $$('[data-lib]', c).forEach(b => b.onclick = () => modalPessoa(pega('perfis', b.dataset.lib)));
 }
 
 /* ---------------- lista de mudanças ---------------- */
@@ -2117,7 +2154,7 @@ async function vCadastros(c, aba='clientes'){
   if (aba === 'equipe') {
     const xs = lista('perfis').sort((a,b) => (a.ativo === b.ativo ? a.nome.localeCompare(b.nome) : a.ativo ? 1 : -1));
     L.innerHTML = `<div class="alerta-box azul small" style="margin-top:10px">${MODO_DEMO ? 'No modo demonstração as pessoas são fictícias.' : 'Cada pessoa cria a própria conta em “Primeiro acesso” na tela de login. Depois, o administrador libera e define o papel aqui.'}</div>`
-      + xs.map(x => `<div class="item" data-id="${x.id}" style="cursor:${ehAdmin()?'pointer':'default'}"><div class="cresce"><div class="t">${esc(x.nome)}${x.empresa_parceira?' · '+esc(x.empresa_parceira):''}</div><div class="s">${PAPEL_NOME[x.papel]}${x.telefone?' · '+esc(x.telefone):''}</div></div><span class="tag ${x.ativo?'verde':'amb'}">${x.ativo?'ativo':'aguardando'}</span></div>`).join('');
+      + xs.map(x => `<div class="item" data-id="${x.id}" style="cursor:${ehAdmin()?'pointer':'default'}"><div class="cresce"><div class="t">${esc(x.nome)}${x.empresa_parceira?' · '+esc(x.empresa_parceira):''}</div><div class="s">${PAPEL_NOME[x.papel]}${x.telefone?' · '+esc(x.telefone):''}</div></div>${!x.ativo && ehAdmin() ? `<button class="btn peq prim" data-id="${x.id}">Liberar</button>` : `<span class="tag ${x.ativo?'verde':'amb'}">${x.ativo?'ativo':'aguardando'}</span>`}</div>`).join('');
     $('#bnovo').onclick = () => MODO_DEMO
       ? modalPessoa(null)
       : modal('Adicionar pessoa', `<p>Peça para a pessoa abrir o sistema e tocar em <b>Primeiro acesso / criar conta</b>. Ela vai aparecer aqui como “aguardando” para você liberar.</p><div class="acoes"><button class="btn prim" data-c>${ic('link')}Copiar link do sistema</button></div>`, c2 => { $('[data-c]', c2).onclick = () => { navigator.clipboard?.writeText(location.origin + location.pathname); toast('Link copiado', 'ok'); }; });
@@ -2128,7 +2165,7 @@ function modalPessoa(x){
   modal(x ? 'Editar pessoa' : 'Nova pessoa', `<form><label class="campo"><span>Nome</span><input name="nome" required value="${esc(x?.nome||'')}"></label>
     <div class="grade g2"><label class="campo"><span>Papel</span><select name="papel">${Object.entries(PAPEL_NOME).map(([k,n]) => `<option value="${k}" ${x?.papel===k?'selected':''}>${n}</option>`).join('')}</select></label><label class="campo"><span>Telefone</span><input name="telefone" value="${esc(x?.telefone||'')}"></label></div>
     <label class="campo"><span>Empresa parceira (para frete terceirizado)</span><input name="empresa_parceira" value="${esc(x?.empresa_parceira||'')}"></label>
-    <label class="small" style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" name="ativo" ${x?.ativo!==false?'checked':''}> Acesso liberado</label>
+    <label class="small" style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input type="checkbox" name="ativo" ${x?.ativo!==false || x?._liberar !== false ?'checked':''}> Acesso liberado</label>
     <p class="tiny muted">Administrador: tudo. Coordenador: tudo menos usuários. Equipe de campo: operação sem valores. Parceiro: só as mudanças atribuídas a ele.</p>
     <button class="btn prim bloco">Salvar</button></form>`, (c, fechar) => {
     $('form', c).onsubmit = async e => { e.preventDefault(); const d = form2obj(e.target);
@@ -2183,12 +2220,15 @@ async function vMais(c){
   c.innerHTML = `<div class="cab"><div><h1>Mais</h1><div class="sub">${esc(PERFIL.nome)} · ${PAPEL_NOME[papel()]}</div></div></div>
   <div class="card" style="padding:4px 14px"><div class="lista">
     ${ehGestor() ? `<a class="item" href="#/relatorios">${ic('grafico','style="width:22px"')}<div class="cresce"><div class="t">Relatórios</div></div></a>` : ''}
+    ${ehAdmin() && pendentesAcesso().length ? `<a class="item" href="#/cadastros/equipe">${ic('pessoas','style="width:22px;color:var(--vermelho)"')}<div class="cresce"><div class="t">${pendentesAcesso().length} aguardando liberação</div><div class="s">Toque para liberar o acesso</div></div><span class="tag verm">novo</span></a>` : ''}
     <a class="item" href="#/cadastros">${ic('pessoas','style="width:22px"')}<div class="cresce"><div class="t">Cadastros</div><div class="s">Clientes, caminhões, materiais e equipe</div></div></a>
+    ${ehAdmin() && 'Notification' in window && Notification.permission !== 'granted' ? `<a class="item" href="#" id="bavisos">${ic('alerta','style="width:22px"')}<div class="cresce"><div class="t">Ativar avisos neste aparelho</div><div class="s">Receba um aviso quando alguém pedir acesso</div></div></a>` : ''}
     ${ehGestor() ? `<a class="item" href="#/config">${ic('engrenagem','style="width:22px"')}<div class="cresce"><div class="t">Configurações</div><div class="s">Empresa, preços, termos, servidor</div></div></a>` : ''}
     ${!instalado() ? `<a class="item" href="#" id="binst">${ic('caixa','style="width:22px"')}<div class="cresce"><div class="t">Instalar o app neste aparelho</div><div class="s">Ícone próprio na tela inicial, abre em tela cheia</div></div></a>` : ''}
     <a class="item" href="#/sair">${ic('sair','style="width:22px"')}<div class="cresce"><div class="t">Sair</div></div></a>
   </div></div>`;
   $('#binst') && ($('#binst').onclick = e => { e.preventDefault(); instalarApp(); });
+  $('#bavisos') && ($('#bavisos').onclick = e => { e.preventDefault(); ativarAvisos(); });
 }
 
 /* ---------------- portal do cliente ---------------- */
